@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 
 from tblib.handler import json_response, ResponseCode
 
-from ..forms import OrderForm
+from ..forms import OrderForm, ReviewForm
 from ..services import TbBuy, TbUser, TbMall
 
 order = Blueprint('order', __name__, url_prefix='/orders')
@@ -335,6 +335,45 @@ def receive(id):
         flash('确认收货成功', 'success')
 
     return json_response(resp['code'], resp['message'], **resp['data'])
+
+
+@order.route('/<int:id>/comment', methods=['GET', 'POST'])
+@login_required
+def comment(id):
+    """评价订单
+    """
+
+    current_user_id = int(current_user.get_id())
+    resp = TbBuy(current_app).get_json('/orders/{}'.format(id), check_code=False)
+    order_data = resp.get('data', {}).get('order')
+    if order_data is None or order_data['user_id'] != current_user_id:
+        flash('订单不存在', 'danger')
+        return redirect(url_for('.index'))
+    if order_data['status'] != 'received':
+        flash('当前订单状态不允许评价', 'danger')
+        return redirect(url_for('.index'))
+
+    order_data = full_order_info([order_data])[0]
+    form = ReviewForm()
+    if form.validate_on_submit():
+        review_note = '评价：{}'.format(form.content.data.strip())
+        existing_note = (order_data.get('note') or '').strip()
+        combined_note = review_note if not existing_note else '{} | {}'.format(existing_note, review_note)
+        if len(combined_note) > 200:
+            combined_note = combined_note[:200]
+
+        update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
+            'status': 'commented',
+            'note': combined_note,
+        }, check_code=False)
+        if update_resp['code'] != 0:
+            flash(update_resp['message'], 'danger')
+            return render_template('order/comment.html', form=form, order=order_data)
+
+        flash('评价成功', 'success')
+        return redirect(url_for('.index'))
+
+    return render_template('order/comment.html', form=form, order=order_data)
 
 
 @order.route('/seller')

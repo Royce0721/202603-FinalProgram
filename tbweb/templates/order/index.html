@@ -56,7 +56,7 @@ status_name %} {% extends "base.html" %} {% block title %}
     >
     <a class="btn btn-outline-secondary m-2" href="#">退货</a>
     {% elif order.status == 'received' %}
-    <a class="btn btn-outline-secondary m-2" href="#">评价</a>
+    <a class="btn btn-outline-secondary m-2" href="{{ url_for('.comment', id=order.id) }}">评价</a>
     {% endif %}
   </div>
 </div>

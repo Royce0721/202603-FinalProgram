@@ -1,9 +1,11 @@
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, render_template, request
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from werkzeug.utils import secure_filename
 
-from ..services import TbBuy, TbMall, TbUser
+from ..forms import AdminOrderForm, AdminUserForm, ProductForm, ShopForm
+from ..services import TbBuy, TbFile, TbMall, TbUser
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -92,6 +94,38 @@ def enrich_orders(orders):
         order['address'] = addresses.get(str(order['address_id']))
 
     return orders
+
+
+def fetch_user_or_404(id):
+    resp = TbUser(current_app).get_json(f'/users/{id}', check_code=False)
+    user = resp.get('data', {}).get('user')
+    if resp.get('code') != 0 or user is None:
+        abort(404)
+    return user
+
+
+def fetch_shop_or_404(id):
+    resp = TbMall(current_app).get_json(f'/shops/{id}', check_code=False)
+    shop = resp.get('data', {}).get('shop')
+    if resp.get('code') != 0 or shop is None:
+        abort(404)
+    return shop
+
+
+def fetch_product_or_404(id):
+    resp = TbMall(current_app).get_json(f'/products/{id}', check_code=False)
+    product = resp.get('data', {}).get('product')
+    if resp.get('code') != 0 or product is None:
+        abort(404)
+    return product
+
+
+def fetch_order_or_404(id):
+    resp = TbBuy(current_app).get_json(f'/orders/{id}', check_code=False)
+    order = resp.get('data', {}).get('order')
+    if resp.get('code') != 0 or order is None:
+        abort(404)
+    return order
 
 
 @admin.route('')
@@ -206,3 +240,123 @@ def transactions():
     transactions = resp.get('data', {}).get('wallet_transactions', [])
     total = resp.get('data', {}).get('total', 0)
     return render_template('admin/transactions.html', transactions=transactions, total=total, page=page)
+
+
+@admin.route('/users/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_user(id):
+    user = fetch_user_or_404(id)
+    form = AdminUserForm(data={
+        'username': user.get('username'),
+        'gender': user.get('gender') or '',
+        'mobile': user.get('mobile') or '',
+        'wallet_money': user.get('wallet_money') or 0,
+    })
+
+    if form.validate_on_submit():
+        resp = TbUser(current_app).post_json(f'/users/{id}', json={
+            'username': form.username.data,
+            'gender': form.gender.data,
+            'mobile': form.mobile.data,
+            'wallet_money': form.wallet_money.data,
+        }, check_code=False)
+        if resp.get('code') != 0:
+            flash(resp.get('message', '用户更新失败'), 'danger')
+        else:
+            flash('用户信息已更新', 'success')
+            return redirect(url_for('.users'))
+
+    return render_template('admin/user_edit.html', form=form, user=user)
+
+
+@admin.route('/shops/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_shop(id):
+    shop = fetch_shop_or_404(id)
+    form = ShopForm(data={
+        'name': shop.get('name'),
+        'description': shop.get('description'),
+    })
+
+    if form.validate_on_submit():
+        payload = {
+            'name': form.name.data,
+            'description': form.description.data,
+        }
+        if form.cover.data and form.cover.data.filename:
+            f = form.cover.data
+            upload_resp = TbFile(current_app).post_json('/files', files={
+                'file': (secure_filename(f.filename), f, f.mimetype),
+            }, check_code=False)
+            if upload_resp.get('code') != 0:
+                flash(upload_resp.get('message', '店铺封面上传失败'), 'danger')
+                return render_template('admin/shop_edit.html', form=form, shop=shop)
+            payload['cover'] = upload_resp['data']['id']
+        resp = TbMall(current_app).post_json(f'/shops/{id}', json=payload, check_code=False)
+        if resp.get('code') != 0:
+            flash(resp.get('message', '店铺更新失败'), 'danger')
+        else:
+            flash('店铺信息已更新', 'success')
+            return redirect(url_for('.shops'))
+
+    return render_template('admin/shop_edit.html', form=form, shop=shop)
+
+
+@admin.route('/products/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_product(id):
+    product = fetch_product_or_404(id)
+    form = ProductForm(data={
+        'title': product.get('title'),
+        'description': product.get('description'),
+        'price': product.get('price'),
+        'amount': product.get('amount'),
+    })
+
+    if form.validate_on_submit():
+        payload = {
+            'title': form.title.data,
+            'description': form.description.data,
+            'price': form.price.data,
+            'amount': form.amount.data,
+        }
+        if form.cover.data and form.cover.data.filename:
+            f = form.cover.data
+            upload_resp = TbFile(current_app).post_json('/files', files={
+                'file': (secure_filename(f.filename), f, f.mimetype),
+            }, check_code=False)
+            if upload_resp.get('code') != 0:
+                flash(upload_resp.get('message', '商品图片上传失败'), 'danger')
+                return render_template('admin/product_edit.html', form=form, product=product)
+            payload['cover'] = upload_resp['data']['id']
+        resp = TbMall(current_app).post_json(f'/products/{id}', json=payload, check_code=False)
+        if resp.get('code') != 0:
+            flash(resp.get('message', '商品更新失败'), 'danger')
+        else:
+            flash('商品信息已更新', 'success')
+            return redirect(url_for('.products'))
+
+    return render_template('admin/product_edit.html', form=form, product=product)
+
+
+@admin.route('/orders/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_order(id):
+    order = fetch_order_or_404(id)
+    form = AdminOrderForm(data={
+        'status': order.get('status'),
+        'note': order.get('note') or '',
+    })
+
+    if form.validate_on_submit():
+        resp = TbBuy(current_app).post_json(f'/orders/{id}', json={
+            'status': form.status.data,
+            'note': form.note.data,
+        }, check_code=False)
+        if resp.get('code') != 0:
+            flash(resp.get('message', '订单更新失败'), 'danger')
+        else:
+            flash('订单信息已更新', 'success')
+            return redirect(url_for('.orders'))
+
+    return render_template('admin/order_edit.html', form=form, order=order)

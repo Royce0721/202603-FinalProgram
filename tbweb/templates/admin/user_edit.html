@@ -1,0 +1,31 @@
+{% from 'macros.html' import form as form_macro %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 编辑用户</title>{% endblock %}
+{% block admin_body %}
+<div class="surface-card">
+  <div class="surface-card__body">
+    <div class="section-head">
+      <div>
+        <div class="section-head__title">编辑用户</div>
+        <p class="section-head__text">用户 #{{ user['id'] }} 的基础信息和钱包余额。</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.users') }}">返回用户管理</a>
+    </div>
+    <div class="row">
+      <div class="col-lg-7">
+        {{ form_macro(form) }}
+      </div>
+      <div class="col-lg-5">
+        <div class="surface-card surface-card--soft">
+          <div class="surface-card__body">
+            <div class="font-weight-bold mb-3">当前信息</div>
+            <p class="mb-2">用户名：{{ user['username'] }}</p>
+            <p class="mb-2">手机号：{{ user['mobile'] or '-' }}</p>
+            <p class="mb-2">性别：{{ user['gender'] or '未设置' }}</p>
+            <p class="mb-0">钱包余额：¥{{ user['wallet_money'] }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

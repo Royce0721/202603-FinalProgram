@@ -1,0 +1,33 @@
+{% from 'macros.html' import form as form_macro, file_url %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 编辑商品</title>{% endblock %}
+{% block admin_body %}
+<div class="surface-card">
+  <div class="surface-card__body">
+    <div class="section-head">
+      <div>
+        <div class="section-head__title">编辑商品</div>
+        <p class="section-head__text">调整商品 #{{ product['id'] }} 的价格、库存和描述。</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.products') }}">返回商品管理</a>
+    </div>
+    <div class="row">
+      <div class="col-lg-7">
+        {{ form_macro(form, enctype='multipart/form-data') }}
+      </div>
+      <div class="col-lg-5">
+        <div class="surface-card surface-card--soft">
+          <div class="surface-card__body">
+            <div class="font-weight-bold mb-3">当前商品</div>
+            {% if product['cover'] %}
+            <img class="img-fluid rounded mb-3" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+            {% endif %}
+            <p class="mb-2">商品名称：{{ product['title'] }}</p>
+            <p class="mb-2">价格：¥{{ product['price'] }}</p>
+            <p class="mb-0">库存：{{ product['amount'] }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

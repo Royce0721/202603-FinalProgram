@@ -1,0 +1,31 @@
+{% from 'macros.html' import form as form_macro %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 编辑订单</title>{% endblock %}
+{% block admin_body %}
+<div class="surface-card">
+  <div class="surface-card__body">
+    <div class="section-head">
+      <div>
+        <div class="section-head__title">编辑订单</div>
+        <p class="section-head__text">调整订单 #{{ order['id'] }} 的状态和备注。</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.orders') }}">返回订单管理</a>
+    </div>
+    <div class="row">
+      <div class="col-lg-7">
+        {{ form_macro(form) }}
+      </div>
+      <div class="col-lg-5">
+        <div class="surface-card surface-card--soft">
+          <div class="surface-card__body">
+            <div class="font-weight-bold mb-3">当前订单</div>
+            <p class="mb-2">订单金额：¥{{ order['pay_amount'] }}</p>
+            <p class="mb-2">当前状态：{{ order['status'] }}</p>
+            <p class="mb-2">收货地址ID：#{{ order['address_id'] }}</p>
+            <p class="mb-0">备注：{{ order['note'] or '-' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

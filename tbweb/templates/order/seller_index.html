@@ -10,21 +10,19 @@ status_name %} {% extends "base.html" %} {% block title %}
   </ol>
 </nav>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-1">店铺订单</h4>
-    <p class="text-muted mb-0">当前店铺：{{ shop['name'] }}</p>
-  </div>
+<div class="page-hero">
+  <h4 class="page-hero__title">店铺订单</h4>
+  <p class="page-hero__text">当前店铺：{{ shop['name'] }}，这里展示所有与你店铺相关的订单。</p>
 </div>
 
 {% if orders %}
 {% for order in orders %}
-<div class="border rounded p-4 bg-white mb-4">
-  <div class="d-flex justify-content-between align-items-start mb-3">
+<div class="order-card mb-4">
+  <div class="order-card__body">
+  <div class="section-head">
     <div>
-      <div><strong>订单ID：</strong>#{{ order['id'] }}</div>
-      <div><strong>状态：</strong><span class="text-danger">{{ status_name(order['status']) }}</span></div>
-      <div><strong>金额：</strong>¥{{ order['pay_amount'] }}</div>
+      <div class="section-head__title">订单 #{{ order['id'] }}</div>
+      <p class="section-head__text">状态：{{ status_name(order['status']) }}</p>
     </div>
     <div class="text-right">
       <a class="btn btn-outline-primary btn-sm" href="{{ url_for('order.seller_detail', id=order['id']) }}">查看详情</a>
@@ -34,8 +32,11 @@ status_name %} {% extends "base.html" %} {% block title %}
     </div>
   </div>
 
-  <div class="mb-2"><strong>收货地址：</strong>{{ order['address']['address'] if order['address'] else '-' }}</div>
-  <div class="mb-3"><strong>联系电话：</strong>{{ order['address']['phone'] if order['address'] else '-' }}</div>
+  <div class="order-meta mb-3">
+    <div class="order-meta__item"><span class="order-meta__label">订单金额</span>¥{{ order['pay_amount'] }}</div>
+    <div class="order-meta__item"><span class="order-meta__label">收货地址</span>{{ order['address']['address'] if order['address'] else '-' }}</div>
+    <div class="order-meta__item"><span class="order-meta__label">联系电话</span>{{ order['address']['phone'] if order['address'] else '-' }}</div>
+  </div>
 
   <div class="row">
     {% for order_product in order['seller_order_products'] %}
@@ -52,6 +53,7 @@ status_name %} {% extends "base.html" %} {% block title %}
   {% if order['status'] == 'paied' and not order['seller_can_deliver'] %}
   <div class="alert alert-warning mb-0">这是跨店铺订单，当前版本暂不支持由单个店主直接整单发货。</div>
   {% endif %}
+  </div>
 </div>
 {% endfor %}
 {% else %}

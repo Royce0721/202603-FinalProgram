@@ -1,79 +1,84 @@
 {% extends "admin/layout.html" %}
 {% block title %}<title>{{ config['SITE_NAME'] }} - 管理员后台</title>{% endblock %}
 {% block admin_body %}
-<div class="mb-4">
-  <h3 class="mb-1">平台总览</h3>
-  <p class="text-muted mb-0">这里可以快速看到整个平台的核心数据。</p>
+<div class="page-hero">
+  <h3 class="page-hero__title">平台总览</h3>
+  <p class="page-hero__text">这里可以快速看到整个平台的核心数据。</p>
 </div>
 
-<div class="row">
-  <div class="col-md-6 col-xl-4 mb-3">
-    <div class="border rounded p-4 bg-white h-100">
-      <div class="text-muted">用户总数</div>
-      <div class="display-4">{{ stats['users'] }}</div>
-    </div>
+<div class="stats-grid">
+  <div class="stats-card">
+    <div class="stats-card__label">用户总数</div>
+    <div class="stats-card__value">{{ stats['users'] }}</div>
   </div>
-  <div class="col-md-6 col-xl-4 mb-3">
-    <div class="border rounded p-4 bg-white h-100">
-      <div class="text-muted">店铺总数</div>
-      <div class="display-4">{{ stats['shops'] }}</div>
-    </div>
+  <div class="stats-card">
+    <div class="stats-card__label">店铺总数</div>
+    <div class="stats-card__value">{{ stats['shops'] }}</div>
   </div>
-  <div class="col-md-6 col-xl-4 mb-3">
-    <div class="border rounded p-4 bg-white h-100">
-      <div class="text-muted">商品总数</div>
-      <div class="display-4">{{ stats['products'] }}</div>
-    </div>
+  <div class="stats-card">
+    <div class="stats-card__label">商品总数</div>
+    <div class="stats-card__value">{{ stats['products'] }}</div>
   </div>
-  <div class="col-md-6 col-xl-4 mb-3">
-    <div class="border rounded p-4 bg-white h-100">
-      <div class="text-muted">订单总数</div>
-      <div class="display-4">{{ stats['orders'] }}</div>
-    </div>
+  <div class="stats-card">
+    <div class="stats-card__label">订单总数</div>
+    <div class="stats-card__value">{{ stats['orders'] }}</div>
   </div>
-  <div class="col-md-6 col-xl-4 mb-3">
-    <div class="border rounded p-4 bg-white h-100">
-      <div class="text-muted">交易总数</div>
-      <div class="display-4">{{ stats['transactions'] }}</div>
-    </div>
+  <div class="stats-card">
+    <div class="stats-card__label">交易总数</div>
+    <div class="stats-card__value">{{ stats['transactions'] }}</div>
   </div>
 </div>
 
 <div class="row mt-2">
   <div class="col-lg-4 mb-4">
-    <div class="border rounded p-4 bg-white h-100">
+    <div class="surface-card surface-card--soft h-100">
+      <div class="surface-card__body">
       <h5 class="mb-3">最新用户</h5>
       {% if recent_users %}
       {% for user in recent_users %}
-      <div class="mb-2">#{{ user['id'] }} {{ user['username'] }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>{{ user['username'] }}</span>
+        <span class="badge-soft">#{{ user['id'] }}</span>
+      </div>
       {% endfor %}
       {% else %}
       <div class="text-muted">暂无用户</div>
       {% endif %}
+      </div>
     </div>
   </div>
   <div class="col-lg-4 mb-4">
-    <div class="border rounded p-4 bg-white h-100">
+    <div class="surface-card surface-card--soft h-100">
+      <div class="surface-card__body">
       <h5 class="mb-3">最新店铺</h5>
       {% if recent_shops %}
       {% for shop in recent_shops %}
-      <div class="mb-2">#{{ shop['id'] }} {{ shop['name'] }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>{{ shop['name'] }}</span>
+        <span class="badge-soft">#{{ shop['id'] }}</span>
+      </div>
       {% endfor %}
       {% else %}
       <div class="text-muted">暂无店铺</div>
       {% endif %}
+      </div>
     </div>
   </div>
   <div class="col-lg-4 mb-4">
-    <div class="border rounded p-4 bg-white h-100">
+    <div class="surface-card surface-card--soft h-100">
+      <div class="surface-card__body">
       <h5 class="mb-3">最新商品</h5>
       {% if recent_products %}
       {% for product in recent_products %}
-      <div class="mb-2">#{{ product['id'] }} {{ product['title'] }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span>{{ product['title'] }}</span>
+        <span class="badge-soft">#{{ product['id'] }}</span>
+      </div>
       {% endfor %}
       {% else %}
       <div class="text-muted">暂无商品</div>
       {% endif %}
+      </div>
     </div>
   </div>
 </div>

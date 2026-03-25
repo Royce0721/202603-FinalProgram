@@ -1,0 +1,32 @@
+{% from 'macros.html' import form as form_macro, file_url %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 编辑店铺</title>{% endblock %}
+{% block admin_body %}
+<div class="surface-card">
+  <div class="surface-card__body">
+    <div class="section-head">
+      <div>
+        <div class="section-head__title">编辑店铺</div>
+        <p class="section-head__text">调整店铺 #{{ shop['id'] }} 的名称和介绍。</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.shops') }}">返回店铺管理</a>
+    </div>
+    <div class="row">
+      <div class="col-lg-7">
+        {{ form_macro(form, enctype='multipart/form-data') }}
+      </div>
+      <div class="col-lg-5">
+        <div class="surface-card surface-card--soft">
+          <div class="surface-card__body">
+            <div class="font-weight-bold mb-3">当前店铺</div>
+            {% if shop['cover'] %}
+            <img class="img-fluid rounded mb-3" src="{{ file_url(shop['cover']) }}" alt="{{ shop['name'] }}" />
+            {% endif %}
+            <p class="mb-2">店铺名称：{{ shop['name'] }}</p>
+            <p class="mb-0">店铺介绍：{{ shop['description'] }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

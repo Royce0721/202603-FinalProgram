@@ -14,6 +14,8 @@ def init_model(app):
     model.init(app)
     # 等价于: from . import models
     import_module('.models', __package__)
+    with app.app_context():
+        model.db.create_all()
 
 
 def init_handler(app):

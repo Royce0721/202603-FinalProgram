@@ -8,7 +8,12 @@
         <div class="section-head__title">编辑店铺</div>
         <p class="section-head__text">调整店铺 #{{ shop['id'] }} 的名称和介绍。</p>
       </div>
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.shops') }}">返回店铺管理</a>
+      <div class="d-flex">
+        <form method="POST" action="{{ url_for('admin.delete_shop', id=shop['id']) }}" onsubmit="return confirm('确认删除这个店铺？如果店铺下还有商品将无法删除。');">
+          <button class="btn btn-outline-danger mr-2" type="submit">删除店铺</button>
+        </form>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.shops') }}">返回店铺管理</a>
+      </div>
     </div>
     <div class="row">
       <div class="col-lg-7">
@@ -22,7 +27,8 @@
             <img class="img-fluid rounded mb-3" src="{{ file_url(shop['cover']) }}" alt="{{ shop['name'] }}" />
             {% endif %}
             <p class="mb-2">店铺名称：{{ shop['name'] }}</p>
-            <p class="mb-0">店铺介绍：{{ shop['description'] }}</p>
+            <p class="mb-2">店铺介绍：{{ shop['description'] }}</p>
+            <p class="mb-0 text-muted">提示：只有空店铺才能删除，店铺下还有商品时会被系统拦截。</p>
           </div>
         </div>
       </div>

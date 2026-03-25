@@ -20,6 +20,10 @@ class BaseConfig(object):
 
     PAGINATION_PER_PAGE = 20
 
+    SERVICE_TBBUY = {
+        'addresses': [v.strip() for v in env('SERVICE_TBBUY_ADDRESSES', 'http://localhost:5030').split(',') if v.strip()],
+    }
+
     # 👉 把 etcd 放这里（最稳）
     ETCD_ADDR = env('ETCD_ADDR', 'localhost:2379')
     ETCD_PREFIX = env('ETCD_PREFIX', '/renaishop/services')

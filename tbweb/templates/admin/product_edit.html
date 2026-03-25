@@ -8,7 +8,12 @@
         <div class="section-head__title">编辑商品</div>
         <p class="section-head__text">调整商品 #{{ product['id'] }} 的价格、库存和描述。</p>
       </div>
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin.products') }}">返回商品管理</a>
+      <div class="d-flex">
+        <form method="POST" action="{{ url_for('admin.delete_product', id=product['id']) }}" onsubmit="return confirm('确认删除这个商品？删除后将无法恢复。');">
+          <button class="btn btn-outline-danger mr-2" type="submit">删除商品</button>
+        </form>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.products') }}">返回商品管理</a>
+      </div>
     </div>
     <div class="row">
       <div class="col-lg-7">

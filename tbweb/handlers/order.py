@@ -13,6 +13,20 @@ def _render_create_page(form, cart_products):
     return render_template('order/create.html', form=form, cart_products=cart_products)
 
 
+def rollback_payment_transactions(order_id, successful_transfers):
+    rollback_failed = False
+    for transfer in reversed(successful_transfers):
+        rollback_resp = TbUser(current_app).post_json('/wallet_transactions', json={
+            'amount': transfer['amount'],
+            'note': '回滚订单({})商品({})支付'.format(order_id, transfer['product_id']),
+            'payer_id': transfer['payee_id'],
+            'payee_id': transfer['payer_id'],
+        }, check_code=False)
+        if rollback_resp.get('code') != 0:
+            rollback_failed = True
+    return rollback_failed
+
+
 def get_current_user_shop():
     resp = TbMall(current_app).get_json('/shops', params={
         'user_id': current_user.get_id(),
@@ -267,6 +281,7 @@ def pay(id):
         'ids': ','.join([str(v['product_id']) for v in order_data['order_products']]),
     })
     products = resp['data']['products']
+    successful_transfers = []
 
     for order_product in order_data['order_products']:
         product = products.get(str(order_product['product_id']))
@@ -281,13 +296,27 @@ def pay(id):
             'note': '支付订单({})商品({})'.format(order_data['id'], product['id']),
             'payer_id': order_data['user_id'],
             'payee_id': product['shop']['user_id'],
-        })
+        }, check_code=False)
         if resp['code'] != 0:
+            rollback_failed = rollback_payment_transactions(order_data['id'], successful_transfers)
+            if rollback_failed:
+                return json_response(ResponseCode.ERROR, '支付失败，且回滚异常，请检查钱包流水')
             return json_response(resp['code'], resp['message'], **resp['data'])
+        successful_transfers.append({
+            'amount': order_product['amount'] * order_product['price'],
+            'payer_id': order_data['user_id'],
+            'payee_id': product['shop']['user_id'],
+            'product_id': product['id'],
+        })
 
     resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
         'status': 'paied',
-    })
+    }, check_code=False)
+    if resp['code'] != 0:
+        rollback_failed = rollback_payment_transactions(order_data['id'], successful_transfers)
+        if rollback_failed:
+            return json_response(ResponseCode.ERROR, '订单状态更新失败，且回滚异常，请检查钱包流水')
+        return json_response(resp['code'], resp['message'], **resp['data'])
 
     flash('支付成功', 'success')
     return json_response(resp['code'], resp['message'], **resp['data'])
@@ -307,9 +336,26 @@ def cancel(id):
     if order_data['status'] != 'new':
         return json_response(ResponseCode.ERROR, '订单状态不允许取消')
 
+    resp = TbMall(current_app).get_json('/products/infos', params={
+        'ids': ','.join([str(v['product_id']) for v in order_data['order_products']]),
+    }, check_code=False)
+    products = resp.get('data', {}).get('products', {})
+
+    for order_product in order_data['order_products']:
+        product = products.get(str(order_product['product_id']))
+        if product is None:
+            return json_response(ResponseCode.NOT_FOUND, '订单商品不存在，无法恢复库存')
+        restore_resp = TbMall(current_app).post_json('/products/{}'.format(order_product['product_id']), json={
+            'amount': product['amount'] + order_product['amount'],
+        }, check_code=False)
+        if restore_resp['code'] != 0:
+            return json_response(restore_resp['code'], restore_resp['message'], **restore_resp['data'])
+
     resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
         'status': 'cancelled',
-    })
+    }, check_code=False)
+    if resp['code'] == 0:
+        flash('订单已取消，库存已恢复', 'success')
 
     return json_response(resp['code'], resp['message'], **resp['data'])
 
@@ -356,18 +402,20 @@ def comment(id):
     order_data = full_order_info([order_data])[0]
     form = ReviewForm()
     if form.validate_on_submit():
-        review_note = '评价：{}'.format(form.content.data.strip())
-        existing_note = (order_data.get('note') or '').strip()
-        combined_note = review_note if not existing_note else '{} | {}'.format(existing_note, review_note)
-        if len(combined_note) > 200:
-            combined_note = combined_note[:200]
+        review_resp = TbBuy(current_app).post_json('/reviews', json={
+            'order_id': id,
+            'user_id': current_user_id,
+            'content': form.content.data.strip(),
+        }, check_code=False)
+        if review_resp['code'] != 0:
+            flash(review_resp['message'], 'danger')
+            return render_template('order/comment.html', form=form, order=order_data)
 
         update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
             'status': 'commented',
-            'note': combined_note,
         }, check_code=False)
         if update_resp['code'] != 0:
-            flash(update_resp['message'], 'danger')
+            flash('评价已写入，但订单状态更新失败，请检查订单状态', 'danger')
             return render_template('order/comment.html', form=form, order=order_data)
 
         flash('评价成功', 'success')

@@ -10,6 +10,20 @@
     </div>
     <span class="badge-soft">共 {{ total }} 人</span>
   </div>
+  <form class="form-row align-items-end mb-4" method="GET">
+    <div class="col-md-4 mb-3">
+      <label for="username">用户名</label>
+      <input class="form-control" id="username" name="username" value="{{ username or '' }}" placeholder="输入用户名" />
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="mobile">手机号</label>
+      <input class="form-control" id="mobile" name="mobile" value="{{ mobile or '' }}" placeholder="输入手机号" />
+    </div>
+    <div class="col-md-4 mb-3 d-flex">
+      <button class="btn btn-primary mr-2" type="submit">搜索</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.users') }}">重置</a>
+    </div>
+  </form>
   <div class="table-responsive">
     <table class="table table-hover data-table">
       <thead>
@@ -24,6 +38,7 @@
         </tr>
       </thead>
       <tbody>
+        {% if users %}
         {% for user in users %}
         <tr>
           <td>#{{ user['id'] }}</td>
@@ -43,10 +58,15 @@
           <td><a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_user', id=user['id']) }}">编辑</a></td>
         </tr>
         {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">没有找到符合条件的用户</td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
-  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.users') }}
+  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.users', username=username, mobile=mobile) }}
   </div>
 </div>
 {% endblock %}

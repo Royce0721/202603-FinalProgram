@@ -10,6 +10,20 @@
     </div>
     <span class="badge-soft">共 {{ total }} 家</span>
   </div>
+  <form class="form-row align-items-end mb-4" method="GET">
+    <div class="col-md-5 mb-3">
+      <label for="keywords">店铺名 / 介绍</label>
+      <input class="form-control" id="keywords" name="keywords" value="{{ keywords or '' }}" placeholder="输入店铺关键词" />
+    </div>
+    <div class="col-md-3 mb-3">
+      <label for="user_id">店主ID</label>
+      <input class="form-control" id="user_id" name="user_id" value="{{ user_id or '' }}" placeholder="输入店主ID" />
+    </div>
+    <div class="col-md-4 mb-3 d-flex">
+      <button class="btn btn-primary mr-2" type="submit">搜索</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.shops') }}">重置</a>
+    </div>
+  </form>
   <div class="table-responsive">
     <table class="table table-hover data-table">
       <thead>
@@ -24,6 +38,7 @@
         </tr>
       </thead>
       <tbody>
+        {% if shops %}
         {% for shop in shops %}
         <tr>
           <td>#{{ shop['id'] }}</td>
@@ -32,13 +47,20 @@
           <td>{{ shop['owner']['username'] if shop['owner'] else '-' }}</td>
           <td>{{ shop['product_total'] }}</td>
           <td>{{ shop['created_at'] }}</td>
-          <td><a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_shop', id=shop['id']) }}">编辑</a></td>
+          <td>
+            <a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_shop', id=shop['id']) }}">编辑</a>
+          </td>
         </tr>
         {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">没有找到符合条件的店铺</td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
-  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.shops') }}
+  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.shops', keywords=keywords, user_id=user_id) }}
   </div>
 </div>
 {% endblock %}

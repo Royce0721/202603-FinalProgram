@@ -6,6 +6,7 @@ from tblib.model import db
 from tblib.handler import json_response, ResponseCode
 
 from ..models import Product, ProductSchema, Shop, ShopSchema
+from ..services import TbBuy
 
 product = Blueprint('product', __name__, url_prefix='/products')
 
@@ -15,6 +16,9 @@ def create_product():
     """创建商品
     """
     data = request.get_json()
+    shop = db.session.query(Shop).filter(Shop.id == data.get('shop_id')).first()
+    if shop is None:
+        return json_response(ResponseCode.NOT_FOUND, '店铺不存在')
 
     product = ProductSchema().load(data)
     db.session.add(product)
@@ -67,7 +71,10 @@ def update_product(id):
     if product is None:
         return json_response(ResponseCode.NOT_FOUND)
 
+    allowed_fields = {'title', 'description', 'cover', 'price', 'amount'}
     for k, v in data.items():
+        if k not in allowed_fields:
+            continue
         setattr(product, k, v)
 
     db.session.commit()
@@ -93,6 +100,12 @@ def delete_product(id):
     product = db.session.query(Product).filter(Product.id == id).first()
     if product is None:
         return json_response(ResponseCode.NOT_FOUND)
+
+    refs_resp = TbBuy(current_app).get_json('/order_products/exists', params={
+        'product_ids': str(product.id),
+    }, check_code=False)
+    if refs_resp.get('data', {}).get('has_refs'):
+        return json_response(ResponseCode.ERROR, '商品已出现在历史订单中，不能直接删除')
 
     db.session.delete(product)
     db.session.commit()

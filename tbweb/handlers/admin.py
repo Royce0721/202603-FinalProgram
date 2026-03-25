@@ -162,7 +162,11 @@ def index():
 @admin_required
 def users():
     page, limit, offset = paginate_params()
+    username = request.args.get('username', '').strip()
+    mobile = request.args.get('mobile', '').strip()
     resp = TbUser(current_app).get_json('/users', params={
+        'username': username or None,
+        'mobile': mobile or None,
         'limit': limit,
         'offset': offset,
     }, check_code=False)
@@ -178,14 +182,25 @@ def users():
         user_shops = shop_resp.get('data', {}).get('shops', [])
         user['shop'] = user_shops[0] if user_shops else None
 
-    return render_template('admin/users.html', users=users, total=total, page=page)
+    return render_template(
+        'admin/users.html',
+        users=users,
+        total=total,
+        page=page,
+        username=username,
+        mobile=mobile,
+    )
 
 
 @admin.route('/shops')
 @admin_required
 def shops():
     page, limit, offset = paginate_params()
+    keywords = request.args.get('keywords', '').strip()
+    user_id = request.args.get('user_id', type=int)
     resp = TbMall(current_app).get_json('/shops', params={
+        'keywords': keywords,
+        'user_id': user_id,
         'limit': limit,
         'offset': offset,
     }, check_code=False)
@@ -200,46 +215,89 @@ def shops():
         }, check_code=False)
         shop['product_total'] = products_resp.get('data', {}).get('total', 0)
 
-    return render_template('admin/shops.html', shops=shops, total=total, page=page)
+    return render_template(
+        'admin/shops.html',
+        shops=shops,
+        total=total,
+        page=page,
+        keywords=keywords,
+        user_id=user_id,
+    )
 
 
 @admin.route('/products')
 @admin_required
 def products():
     page, limit, offset = paginate_params()
+    keywords = request.args.get('keywords', '').strip()
+    shop_id = request.args.get('shop_id', type=int)
     resp = TbMall(current_app).get_json('/products', params={
+        'keywords': keywords,
+        'shop_id': shop_id,
         'limit': limit,
         'offset': offset,
     }, check_code=False)
     products = enrich_products_with_shops(resp.get('data', {}).get('products', []))
     total = resp.get('data', {}).get('total', 0)
-    return render_template('admin/products.html', products=products, total=total, page=page)
+    return render_template(
+        'admin/products.html',
+        products=products,
+        total=total,
+        page=page,
+        keywords=keywords,
+        shop_id=shop_id,
+    )
 
 
 @admin.route('/orders')
 @admin_required
 def orders():
     page, limit, offset = paginate_params()
+    user_id = request.args.get('user_id', type=int)
+    status = request.args.get('status', '').strip()
+    keywords = request.args.get('keywords', '').strip()
     resp = TbBuy(current_app).get_json('/orders', params={
+        'user_id': user_id,
+        'status': status,
+        'keywords': keywords,
         'limit': limit,
         'offset': offset,
     }, check_code=False)
     orders = enrich_orders(resp.get('data', {}).get('orders', []))
     total = resp.get('data', {}).get('total', 0)
-    return render_template('admin/orders.html', orders=orders, total=total, page=page)
+    return render_template(
+        'admin/orders.html',
+        orders=orders,
+        total=total,
+        page=page,
+        user_id=user_id,
+        status=status,
+        keywords=keywords,
+    )
 
 
 @admin.route('/transactions')
 @admin_required
 def transactions():
     page, limit, offset = paginate_params()
+    user_id = request.args.get('user_id', type=int)
+    keywords = request.args.get('keywords', '').strip()
     resp = TbUser(current_app).get_json('/wallet_transactions', params={
+        'user_id': user_id,
+        'keywords': keywords,
         'limit': limit,
         'offset': offset,
     }, check_code=False)
     transactions = resp.get('data', {}).get('wallet_transactions', [])
     total = resp.get('data', {}).get('total', 0)
-    return render_template('admin/transactions.html', transactions=transactions, total=total, page=page)
+    return render_template(
+        'admin/transactions.html',
+        transactions=transactions,
+        total=total,
+        page=page,
+        user_id=user_id,
+        keywords=keywords,
+    )
 
 
 @admin.route('/users/<int:id>/edit', methods=['GET', 'POST'])
@@ -302,6 +360,18 @@ def edit_shop(id):
     return render_template('admin/shop_edit.html', form=form, shop=shop)
 
 
+@admin.route('/shops/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_shop(id):
+    resp = TbMall(current_app).delete_json(f'/shops/{id}', check_code=False)
+    if resp.get('code') != 0:
+        flash(resp.get('message', '店铺删除失败'), 'danger')
+        return redirect(url_for('.edit_shop', id=id))
+
+    flash('店铺已删除', 'success')
+    return redirect(url_for('.shops'))
+
+
 @admin.route('/products/<int:id>/edit', methods=['GET', 'POST'])
 @admin_required
 def edit_product(id):
@@ -337,6 +407,18 @@ def edit_product(id):
             return redirect(url_for('.products'))
 
     return render_template('admin/product_edit.html', form=form, product=product)
+
+
+@admin.route('/products/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_product(id):
+    resp = TbMall(current_app).delete_json(f'/products/{id}', check_code=False)
+    if resp.get('code') != 0:
+        flash(resp.get('message', '商品删除失败'), 'danger')
+        return redirect(url_for('.edit_product', id=id))
+
+    flash('商品已删除', 'success')
+    return redirect(url_for('.products'))
 
 
 @admin.route('/orders/<int:id>/edit', methods=['GET', 'POST'])

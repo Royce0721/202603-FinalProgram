@@ -5,6 +5,7 @@ from tblib.model import db
 from tblib.handler import json_response, ResponseCode
 
 from ..models import Shop, ShopSchema, Product, ProductSchema
+from ..services import TbBuy
 
 from werkzeug.exceptions import BadRequest
 
@@ -71,7 +72,10 @@ def update_shop(id):
     if shop is None:
         return json_response(ResponseCode.NOT_FOUND)
 
+    allowed_fields = {'name', 'description', 'cover'}
     for k, v in data.items():
+        if k not in allowed_fields:
+            continue
         setattr(shop, k, v)
 
     db.session.commit()
@@ -99,6 +103,12 @@ def delete_shop(id):
         return json_response(ResponseCode.NOT_FOUND)
 
     if shop.products.count() > 0:
+        product_ids = [str(product.id) for product in shop.products.all()]
+        refs_resp = TbBuy(current_app).get_json('/order_products/exists', params={
+            'product_ids': ','.join(product_ids),
+        }, check_code=False)
+        if refs_resp.get('data', {}).get('has_refs'):
+            return json_response(ResponseCode.ERROR, '店铺下商品存在历史订单记录，不能删除店铺')
         return json_response(ResponseCode.ERROR, '店铺下还有商品，请先删除商品后再删除店铺')
 
     db.session.delete(shop)

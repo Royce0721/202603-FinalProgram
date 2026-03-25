@@ -54,11 +54,11 @@ def user_list():
     # 查询接口
     query = User.query
     # 如果用户名不为空，使用 username 对查询结果过滤
-    if username is not None:
-        query = query.filter(User.username == username)
+    if username is not None and username != '':
+        query = query.filter(User.username.ilike('%{}%'.format(username)))
     # 如果手机号不为空，使用 mobile 对查询结果过滤
-    if mobile is not None:
-        query = query.filter(User.mobile == mobile)
+    if mobile is not None and mobile != '':
+        query = query.filter(User.mobile.ilike('%{}%'.format(mobile)))
     # 统计数量
     total = query.count()
     # 进行查询

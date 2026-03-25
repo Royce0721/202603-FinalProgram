@@ -10,6 +10,33 @@
     </div>
     <span class="badge-soft">共 {{ total }} 单</span>
   </div>
+  <form class="form-row align-items-end mb-4" method="GET">
+    <div class="col-md-4 mb-3">
+      <label for="user_id">下单用户ID</label>
+      <input class="form-control" id="user_id" name="user_id" value="{{ user_id or '' }}" placeholder="输入用户ID" />
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="keywords">订单备注</label>
+      <input class="form-control" id="keywords" name="keywords" value="{{ keywords or '' }}" placeholder="模糊搜索备注" />
+    </div>
+    <div class="col-md-4 mb-3">
+      <label for="status">订单状态</label>
+      <select class="form-control" id="status" name="status">
+        <option value="">全部状态</option>
+        <option value="new" {{ 'selected' if status == 'new' else '' }}>待支付</option>
+        <option value="cancelled" {{ 'selected' if status == 'cancelled' else '' }}>已取消</option>
+        <option value="paied" {{ 'selected' if status == 'paied' else '' }}>待发货</option>
+        <option value="delivered" {{ 'selected' if status == 'delivered' else '' }}>待收货</option>
+        <option value="received" {{ 'selected' if status == 'received' else '' }}>待评价</option>
+        <option value="returned" {{ 'selected' if status == 'returned' else '' }}>已退回</option>
+        <option value="commented" {{ 'selected' if status == 'commented' else '' }}>已评价</option>
+      </select>
+    </div>
+    <div class="col-md-12 mb-3 d-flex">
+      <button class="btn btn-primary mr-2" type="submit">筛选</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.orders') }}">重置</a>
+    </div>
+  </form>
   <div class="table-responsive">
     <table class="table table-hover data-table">
       <thead>
@@ -25,6 +52,7 @@
         </tr>
       </thead>
       <tbody>
+        {% if orders %}
         {% for order in orders %}
         <tr>
           <td>#{{ order['id'] }}</td>
@@ -37,10 +65,15 @@
           <td><a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_order', id=order['id']) }}">编辑</a></td>
         </tr>
         {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">没有找到符合条件的订单</td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
-  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.orders') }}
+  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.orders', user_id=user_id, status=status, keywords=keywords) }}
   </div>
 </div>
 {% endblock %}

@@ -66,6 +66,7 @@ def wallet_transaction_list():
     """
 
     user_id = request.args.get('user_id', type=int)
+    keywords = request.args.get('keywords', '')
     order_direction = request.args.get('order_direction', 'desc')
     limit = request.args.get(
         'limit', current_app.config['PAGINATION_PER_PAGE'], type=int)
@@ -78,6 +79,8 @@ def wallet_transaction_list():
     if user_id is not None:
         query = query.filter(or_(WalletTransaction.payer_id ==
                                  user_id, WalletTransaction.payee_id == user_id))
+    if keywords != '':
+        query = query.filter(WalletTransaction.note.ilike('%{}%'.format(keywords)))
     total = query.count()
     query = query.order_by(order_by).limit(limit).offset(offset)
 

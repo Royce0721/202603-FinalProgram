@@ -1,4 +1,5 @@
 {% macro pagination(total, current, endpoint) -%}
+{% if total > 1 %}
 <nav class="my-5">
   <ul class="pagination justify-content-center">
     <li class="page-item {{ 'disabled' if current == 1 else '' }}">
@@ -30,6 +31,7 @@
     </li>
   </ul>
 </nav>
+{% endif %}
 {%- endmacro %}
 
 {% macro form(form, url='', enctype='') %}
@@ -60,5 +62,4 @@
 
 {% macro file_url(filename) %} {{ filename if filename.startswith('http') else
 '{}/{}'.format(config['DOMAIN_TBFILE'], filename) }} {% endmacro %}
-
 

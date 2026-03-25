@@ -38,7 +38,7 @@
   <div class="section-head">
     <div>
       <div class="section-head__title">属于当前店铺的商品</div>
-      <p class="section-head__text">这里只显示当前卖家需要处理的商品。</p>
+      <p class="section-head__text">先把和你这家店有关的部分看清楚。</p>
     </div>
   </div>
   {% for order_product in order['seller_order_products'] %}
@@ -51,7 +51,7 @@
   {% endfor %}
 
   {% if order['status'] == 'paied' and not order['seller_can_deliver'] %}
-  <div class="alert alert-warning mb-0">这是跨店铺订单，当前版本暂不支持由单个店主直接整单发货。</div>
+  <div class="alert alert-warning mb-0">这单里还有别家的商品，先别在这里整单发货。</div>
   {% endif %}
   </div>
 </div>

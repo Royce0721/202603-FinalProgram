@@ -31,3 +31,7 @@ class AdminOrderForm(FlaskForm):
     )
     note = TextAreaField('订单备注', validators=[Optional(), Length(0, 200)])
     submit = SubmitField('保存订单')
+
+
+class RecommendationForm(FlaskForm):
+    submit = SubmitField('保存推荐位')

@@ -10,9 +10,14 @@ common = Blueprint('common', __name__, url_prefix='/')
 @common.route('')
 def index():
     # 推荐商品
-    #product_ids = [int(x) for x in redis.lrange('recommend.products', 0, 3)]
-    product_ids = [2,3,4]
-
+    product_ids = []
+    for raw_id in redis.lrange('recommend.products', 0, -1):
+        try:
+            product_ids.append(int(raw_id))
+        except (TypeError, ValueError):
+            continue
+    if not product_ids:
+        product_ids = [2, 3, 4]
 
     products = []
     if product_ids:
@@ -26,8 +31,14 @@ def index():
                 products.append(product)
 
     # 推荐店铺
-    #shop_ids = [int(x) for x in redis.lrange('recommend.shops', 0, 2)]
-    shop_ids = [5,6]
+    shop_ids = []
+    for raw_id in redis.lrange('recommend.shops', 0, -1):
+        try:
+            shop_ids.append(int(raw_id))
+        except (TypeError, ValueError):
+            continue
+    if not shop_ids:
+        shop_ids = [5, 6]
 
     shops = []
     if shop_ids:

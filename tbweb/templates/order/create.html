@@ -5,14 +5,49 @@
 extends "base.html" %} {% block title %}
 <title>{{ config['SITE_NAME'] }} - 创建订单</title>
 {% endblock %} {% block body %}
-<div class="form w-50 mx-auto my-5">
-  <h5>创建订单</h5>
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('cart_product.index') }}">购物车</a></li>
+    <li class="breadcrumb-item active" aria-current="page">确认订单</li>
+  </ol>
+</nav>
 
-  <div class="my-3">
-    {% for cart_product in cart_products %} {{ cart_product_macro(cart_product)
-    }} {% endfor %}
+<div class="page-hero">
+  <div class="page-hero__title">确认订单</div>
+  <p class="page-hero__text">最后确认一遍，没问题就下单。</p>
+</div>
+
+<div class="checkout-layout">
+  <div class="checkout-panel">
+    <div class="checkout-panel__body">
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">待结算商品</div>
+          <p class="section-head__text">带走这些之前，再看一眼。</p>
+        </div>
+      </div>
+      <div class="summary-stack">
+        {% for cart_product in cart_products %}
+        <div class="list-card">
+          <div class="list-card__body">
+            {{ cart_product_macro(cart_product) }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
-
-  {{ form_macro(form) }}
+  <div class="checkout-panel">
+    <div class="checkout-panel__body">
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">下单信息</div>
+          <p class="section-head__text">地址和备注填在右边就行。</p>
+        </div>
+      </div>
+      {{ form_macro(form) }}
+    </div>
+  </div>
 </div>
 {% endblock %}

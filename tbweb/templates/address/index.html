@@ -1,37 +1,48 @@
-{% extends "base.html" %} {% block title %}
+{% extends "user/_account_layout.html" %}
+{% block title %}
 <title>{{ config['SITE_NAME'] }} - 收货地址列表</title>
-{% endblock %} {% block body %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/">首页</a></li>
-    <li class="breadcrumb-item active" aria-current="page">收货地址列表</li>
-  </ol>
-</nav>
-
-<div class="d-flex justify-content-end">
+{% endblock %}
+{% set page_title = '收货地址' %}
+{% set page_text = '常用地址先放这儿，下单会省事很多。' %}
+{% block account_body %}
+<div class="section-head">
+  <div>
+    <div class="section-head__title">地址列表</div>
+    <p class="section-head__text">常用地址放这边，改起来也方便。</p>
+  </div>
   <a class="btn btn-primary" href="{{ url_for('.create') }}">新增地址</a>
 </div>
 
+{% if addresses %}
 {% for address in addresses %}
-<div class="p-3 border-bottom d-flex justify-content-between">
-  <div>
-    <p>
-      <strong>地址：</strong>{{ address.address }}
-      <span class="text-success"
-        >{{ '默认' if address.is_default else '' }}</span
+<div class="list-card mb-3">
+  <div class="list-card__body d-flex justify-content-between align-items-center flex-wrap">
+    <div class="mr-3">
+      <p class="mb-2">
+        <strong>地址：</strong>{{ address.address }}
+        {% if address.is_default %}
+        <span class="badge-soft ml-2">默认</span>
+        {% endif %}
+      </p>
+      <p class="mb-0 text-secondary">
+        <strong>联系电话：</strong><span>{{ address.phone }}</span>
+        <strong class="ml-3">邮编：</strong><span>{{ address.zip_code }}</span>
+      </p>
+    </div>
+    <div class="d-flex flex-column justify-content-around mt-3 mt-md-0">
+      <a
+        class="btn btn-outline-secondary"
+        href="{{ url_for('.detail', id=address.id) }}"
+        >编辑</a
       >
-    </p>
-    <p>
-      <strong>联系电话：</strong><span>{{ address.phone }}</span>
-      <strong>邮编：</strong><span>{{ address.zip_code }}</span>
-    </p>
-  </div>
-  <div class="d-flex flex-column justify-content-around">
-    <a
-      class="btn btn-outline-secondary"
-      href="{{ url_for('.detail', id=address.id) }}"
-      >编辑</a
-    >
+    </div>
   </div>
 </div>
-{% endfor %} {% endblock %}
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="empty-state__title">你还没有收货地址</div>
+  <p class="empty-state__text">先加一个，之后下单会省事很多。</p>
+</div>
+{% endif %}
+{% endblock %}

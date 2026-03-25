@@ -1,9 +1,17 @@
-{% from 'macros.html' import form as form_macro %} {% extends "base.html" %} {%
-block title %}
+{% from 'macros.html' import form as form_macro %} {% extends "user/_account_layout.html" %}
+{% block title %}
 <title>{{ config['SITE_NAME'] }} - 地址详情</title>
-{% endblock %} {% block body %}
-<div class="form w-50 mx-auto my-5">
-  <h5>地址详情</h5>
+{% endblock %}
+{% set page_title = '地址详情' %}
+{% set page_text = '改一下，很快。' %}
+{% block account_body %}
+<div class="section-head">
+  <div>
+    <div class="section-head__title">编辑收货地址</div>
+    <p class="section-head__text">改完下次就按新的来。</p>
+  </div>
+</div>
+<div class="mx-auto" style="max-width: 680px;">
   {{ form_macro(form) }}
 </div>
 {% endblock %}

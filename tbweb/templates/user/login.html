@@ -2,12 +2,26 @@
 block title %}
 <title>{{ config['SITE_NAME'] }} - 登录</title>
 {% endblock %} {% block body %}
-<div class="form w-50 mx-auto my-5">
-  <h5>登录</h5>
-  {{ form_macro(form) }}
-  <p class="text-right">
-    还没有账号？<a href="{{ url_for('user.register') }}">注册一个</a>
-  </p>
+<div class="auth-shell">
+  <div class="auth-panel">
+    <div class="hero-panel__eyebrow">欢迎回来</div>
+    <div class="auth-panel__title">登录后，继续逛、继续买，也继续管店</div>
+    <p class="auth-panel__text">上次看到哪儿，这次就从哪儿接着来。</p>
+    <div class="auth-points">
+      <div class="auth-point">看看今天想买点什么</div>
+      <div class="auth-point">回店里看看有没有新订单</div>
+      <div class="auth-point">想切去后台，也就一步的事</div>
+    </div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-card__body">
+      <div class="auth-card__title">账号登录</div>
+      {{ form_macro(form) }}
+      <p class="text-right mb-0">
+        还没有账号？<a href="{{ url_for('user.register') }}">注册一个</a>
+      </p>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

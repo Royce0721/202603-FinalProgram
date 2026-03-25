@@ -2,8 +2,22 @@
 block title %}
 <title>{{ config['SITE_NAME'] }} - 注册</title>
 {% endblock %} {% block body %}
-<div class="form w-50 mx-auto my-5">
-  <h5>注册</h5>
-  {{ form_macro(form) }}
+<div class="auth-shell">
+  <div class="auth-panel">
+    <div class="hero-panel__eyebrow">创建账号</div>
+    <div class="auth-panel__title">注册一个账号，先把喜欢的东西逛起来</div>
+    <p class="auth-panel__text">先当买家也好，后面想开店也来得及。</p>
+    <div class="auth-points">
+      <div class="auth-point">先逛一圈，把流程跑顺</div>
+      <div class="auth-point">想开店的时候，右上角就能进</div>
+      <div class="auth-point">一个账号，买东西和管店都够用</div>
+    </div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-card__body">
+      <div class="auth-card__title">创建新账号</div>
+      {{ form_macro(form) }}
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -4,10 +4,16 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 
-from ..forms import AdminOrderForm, AdminUserForm, ProductForm, ShopForm
+from ..forms import AdminOrderForm, AdminUserForm, ProductForm, RecommendationForm, ShopForm
 from ..services import TbBuy, TbFile, TbMall, TbUser
+from tblib.redis import redis
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+def has_uploaded_file(field):
+    file_data = getattr(field, 'data', None)
+    return bool(file_data and getattr(file_data, 'filename', ''))
 
 
 def is_admin_user():
@@ -126,6 +132,22 @@ def fetch_order_or_404(id):
     if resp.get('code') != 0 or order is None:
         abort(404)
     return order
+
+
+def load_recommend_ids(key):
+    ids = []
+    for raw_id in redis.lrange(key, 0, -1):
+        try:
+            ids.append(int(raw_id))
+        except (TypeError, ValueError):
+            continue
+    return ids
+
+
+def save_recommend_ids(key, ids):
+    redis.delete(key)
+    if ids:
+        redis.rpush(key, *ids)
 
 
 @admin.route('')
@@ -300,6 +322,56 @@ def transactions():
     )
 
 
+@admin.route('/recommendations', methods=['GET', 'POST'])
+@admin_required
+def recommendations():
+    form = RecommendationForm()
+
+    products_resp = TbMall(current_app).get_json('/products', params={
+        'limit': 100,
+        'offset': 0,
+    }, check_code=False)
+    shops_resp = TbMall(current_app).get_json('/shops', params={
+        'limit': 100,
+        'offset': 0,
+    }, check_code=False)
+
+    products = enrich_products_with_shops(products_resp.get('data', {}).get('products', []))
+    shops = enrich_shops_with_users(shops_resp.get('data', {}).get('shops', []))
+
+    selected_product_ids = load_recommend_ids('recommend.products')
+    selected_shop_ids = load_recommend_ids('recommend.shops')
+
+    if form.validate_on_submit():
+        selected_product_ids = []
+        for raw_id in request.form.getlist('product_ids'):
+            try:
+                selected_product_ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+
+        selected_shop_ids = []
+        for raw_id in request.form.getlist('shop_ids'):
+            try:
+                selected_shop_ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                continue
+
+        save_recommend_ids('recommend.products', selected_product_ids)
+        save_recommend_ids('recommend.shops', selected_shop_ids)
+        flash('首页推荐已经更新', 'success')
+        return redirect(url_for('.recommendations'))
+
+    return render_template(
+        'admin/recommendations.html',
+        form=form,
+        products=products,
+        shops=shops,
+        selected_product_ids=selected_product_ids,
+        selected_shop_ids=selected_shop_ids,
+    )
+
+
 @admin.route('/users/<int:id>/edit', methods=['GET', 'POST'])
 @admin_required
 def edit_user(id):
@@ -341,7 +413,7 @@ def edit_shop(id):
             'name': form.name.data,
             'description': form.description.data,
         }
-        if form.cover.data and form.cover.data.filename:
+        if has_uploaded_file(form.cover):
             f = form.cover.data
             upload_resp = TbFile(current_app).post_json('/files', files={
                 'file': (secure_filename(f.filename), f, f.mimetype),
@@ -390,7 +462,7 @@ def edit_product(id):
             'price': form.price.data,
             'amount': form.amount.data,
         }
-        if form.cover.data and form.cover.data.filename:
+        if has_uploaded_file(form.cover):
             f = form.cover.data
             upload_resp = TbFile(current_app).post_json('/files', files={
                 'file': (secure_filename(f.filename), f, f.mimetype),

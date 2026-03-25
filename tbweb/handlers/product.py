@@ -10,6 +10,11 @@ from ..services import TbFile, TbMall
 product = Blueprint('product', __name__, url_prefix='/products')
 
 
+def has_uploaded_file(field):
+    file_data = getattr(field, 'data', None)
+    return bool(file_data and getattr(file_data, 'filename', ''))
+
+
 def get_current_user_shop():
     resp = TbMall(current_app).get_json('/shops', params={
         'user_id': current_user.get_id(),
@@ -83,7 +88,7 @@ def create():
     form = ProductForm()
     if form.validate_on_submit():
         cover = ''
-        if form.cover.data and form.cover.data.filename:
+        if has_uploaded_file(form.cover):
             f = form.cover.data
             upload_resp = TbFile(current_app).post_json('/files', files={
                 'file': (secure_filename(f.filename), f, f.mimetype),
@@ -125,7 +130,12 @@ def edit(id):
         flash('未找到该商品，或你无权编辑它', 'danger')
         return redirect(url_for('.mine'))
 
-    form = ProductForm(data=product_data)
+    form = ProductForm(data={
+        'title': product_data.get('title'),
+        'description': product_data.get('description'),
+        'price': product_data.get('price'),
+        'amount': product_data.get('amount'),
+    })
     if form.validate_on_submit():
         payload = {
             'title': form.title.data,
@@ -134,7 +144,7 @@ def edit(id):
             'amount': form.amount.data,
         }
 
-        if form.cover.data and form.cover.data.filename:
+        if has_uploaded_file(form.cover):
             f = form.cover.data
             upload_resp = TbFile(current_app).post_json('/files', files={
                 'file': (secure_filename(f.filename), f, f.mimetype),

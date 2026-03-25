@@ -12,25 +12,41 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
   </ol>
 </nav>
 
-<div class="d-flex justify-content-end mb-3">
-  <form class="form-inline">
-    <label class="sr-only" for="keywords">关键词</label>
-    <input type="text" value="{{ keywords }}" class="form-control mb-2 mr-sm-2" id="keywords" name="keywords" placeholder="搜索店铺">
-    <button type="submit" class="btn btn-primary mb-2">搜索</button>
-    <a class="btn btn-secondary mb-2 ml-2" href="{{ url_for('.index') }}">清空</a>
+<div class="page-hero">
+  <div class="page-hero__title">店铺列表</div>
+  <p class="page-hero__text">想先逛店，再慢慢挑商品也行。</p>
+</div>
+
+<div class="search-panel mb-4">
+  <form class="form-row align-items-end">
+    <div class="col-md-8 mb-2 mb-md-0">
+      <label class="sr-only" for="keywords">关键词</label>
+      <input type="text" value="{{ keywords }}" class="form-control" id="keywords" name="keywords" placeholder="搜索店铺名称或介绍">
+    </div>
+    <div class="col-md-4 d-flex">
+      <button type="submit" class="btn btn-primary mr-2">搜索</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('.index') }}">清空</a>
+    </div>
   </form>
 </div>
 
 {% if shops %}
 {% for shop in shops %}
-<div class="row py-3 border-bottom">
-  <div class="col-6 col-md-4 col-lg-3">
-    {{ shop_macro(shop) }}
-  </div>
-  <div class="col-6 col-md-8 col-lg-9">
-    <div class="product-grid justify-content-start">
-      {% for product in shop.get('products', [])[:3] %} {{
-      product_macro(product) }} {% endfor %}
+<div class="surface-card mb-4">
+  <div class="surface-card__body">
+    <div class="split-layout">
+      <div>
+        {{ shop_macro(shop) }}
+      </div>
+      <div>
+        <div class="row">
+          {% for product in shop.get('products', [])[:3] %}
+          <div class="col-md-6 col-xl-4 mb-3">
+            {{ product_macro(product, 'product-card--fluid') }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -42,7 +58,7 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
     {% if keywords %}
     没有搜索到和“{{ keywords }}”相关的店铺，换个关键词试试吧。
     {% else %}
-    当前还没有可展示的店铺。
+    暂时还没有开张的店铺。
     {% endif %}
   </p>
 </div>

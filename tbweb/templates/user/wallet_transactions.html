@@ -1,44 +1,56 @@
 {% from 'macros.html' import pagination %}
-
-{% extends "base.html" %}
+{% extends "user/_account_layout.html" %}
 
 {% block title %}
 <title>{{ config['SITE_NAME'] }} - 钱包交易记录</title>
 {% endblock %}
 
-{% block body %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/">首页</a></li>
-    <li class="breadcrumb-item"><a href="{{ url_for('.wallet') }}">钱包</a></li>
-    <li class="breadcrumb-item active" aria-current="page">交易记录</li>
-  </ol>
-</nav>
+{% set page_title = '交易记录' %}
+{% set page_text = '每一笔进出都记着。' %}
 
-<table class="table my-5">
-  <thead>
-    <tr>
-      <th scope="col">编号</th>
-      <th scope="col">金额</th>
-      <th scope="col">收款方</th>
-      <th scope="col">付款方</th>
-      <th scope="col">备注</th>
-      <th scope="col">交易时间</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for wallet_transaction in wallet_transactions %}
-    <tr>
-      <th scope="row">{{ wallet_transaction['id'] }}</th>
-      <td>￥{{ wallet_transaction['amount'] }}</td>
-      <td>{{ wallet_transaction['payee']['username'] }}</td>
-      <td>{{ wallet_transaction['payer']['username'] }}</td>
-      <td>{{ wallet_transaction['note'] }}</td>
-      <td>{{ wallet_transaction['created_at'][:19] }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% block account_body %}
+<div class="section-head">
+  <div>
+    <div class="section-head__title">钱包流水</div>
+    <p class="section-head__text">收了多少、付了多少，一眼就能看见。</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('.wallet') }}">返回钱包</a>
+</div>
+
+<div class="surface-card">
+  <div class="surface-card__body">
+    <table class="table data-table">
+      <thead>
+        <tr>
+          <th scope="col">编号</th>
+          <th scope="col">金额</th>
+          <th scope="col">收款方</th>
+          <th scope="col">付款方</th>
+          <th scope="col">备注</th>
+          <th scope="col">交易时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if wallet_transactions %}
+        {% for wallet_transaction in wallet_transactions %}
+        <tr>
+          <th scope="row">{{ wallet_transaction['id'] }}</th>
+          <td>￥{{ wallet_transaction['amount'] }}</td>
+          <td>{{ wallet_transaction['payee']['username'] }}</td>
+          <td>{{ wallet_transaction['payer']['username'] }}</td>
+          <td>{{ wallet_transaction['note'] }}</td>
+          <td>{{ wallet_transaction['created_at'][:19] }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-5">暂时还没有交易记录</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, request.args.get('page', '1')|int,
 '.wallet_transactions') }}

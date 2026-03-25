@@ -11,14 +11,41 @@ extends "base.html" %} {% block title %}
   </ol>
 </nav>
 
-<div class="form w-50 mx-auto my-5">
-  <h5>评价订单 #{{ order['id'] }}</h5>
+<div class="page-hero">
+  <div class="page-hero__title">评价订单 #{{ order['id'] }}</div>
+  <p class="page-hero__text">说两句这次买得怎么样。</p>
+</div>
 
-  <div class="my-3">
-    {% for order_product in order['order_products'] %} {{
-    cart_product_macro(order_product) }} {% endfor %}
+<div class="checkout-layout">
+  <div class="checkout-panel">
+    <div class="checkout-panel__body">
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">已购商品</div>
+          <p class="section-head__text">先看看你这次买了什么。</p>
+        </div>
+      </div>
+      <div class="summary-stack">
+        {% for order_product in order['order_products'] %}
+        <div class="list-card">
+          <div class="list-card__body">
+            {{ cart_product_macro(order_product) }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
-
-  {{ form_macro(form) }}
+  <div class="checkout-panel">
+    <div class="checkout-panel__body">
+      <div class="section-head">
+        <div>
+          <div class="section-head__title">填写评价</div>
+          <p class="section-head__text">简单写几句就好。</p>
+        </div>
+      </div>
+      {{ form_macro(form) }}
+    </div>
+  </div>
 </div>
 {% endblock %}

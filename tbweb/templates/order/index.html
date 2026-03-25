@@ -12,26 +12,44 @@ status_name %} {% extends "base.html" %} {% block title %}
   </ol>
 </nav>
 
+<div class="page-hero">
+  <div class="page-hero__title">我的订单</div>
+  <p class="page-hero__text">最近买过什么，翻一眼就知道。</p>
+</div>
+
+{% if orders %}
 {% for order in orders %}
-<div class="p-3 border-bottom d-flex">
-  <div>
-    <p><strong>收货地址：</strong>{{ order.address.address }}</p>
-    <p>
-      <strong>联系电话：</strong><span>{{ order.address.phone }}</span>
-      <strong>邮编：</strong><span>{{ order.address.zip_code }}</span>
-    </p>
-    {% for order_product in order['order_products'] %} {{
-    cart_product_macro(order_product) }} {% endfor %}
-    <p class="d-flex">
-      <span class="text-info">￥{{ order.pay_amount }}</span
-      ><span class="ml-auto text-danger">{{ status_name(order.status) }}</span>
-    </p>
-    <p>{{ order.note }}</p>
+<div class="order-card mb-4">
+  <div class="order-card__body">
+    <div class="section-head">
+      <div>
+        <div class="section-head__title">订单 #{{ order.id }}</div>
+        <p class="section-head__text">收货地址：{{ order.address.address }}</p>
+      </div>
+      <span class="badge-soft">{{ status_name(order.status) }}</span>
+    </div>
+    <div class="order-meta mb-4">
+      <div class="order-meta__item"><span class="order-meta__label">联系电话</span>{{ order.address.phone }}</div>
+      <div class="order-meta__item"><span class="order-meta__label">邮编</span>{{ order.address.zip_code }}</div>
+      <div class="order-meta__item"><span class="order-meta__label">订单金额</span><span class="text-primary font-weight-bold">￥{{ order.pay_amount }}</span></div>
+    </div>
+    <div class="dashboard-stack">
+      {% for order_product in order['order_products'] %}
+      <div class="list-card">
+        <div class="list-card__body">
+          {{ cart_product_macro(order_product) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if order.note %}
+    <p class="mt-3 mb-0 text-secondary">备注：{{ order.note }}</p>
+    {% endif %}
   </div>
-  <div class="ml-auto d-flex flex-column justify-content-center">
+  <div class="surface-card__body border-top d-flex flex-wrap justify-content-end">
     {% if order.status == 'new' %}
     <a
-      class="btn btn-outline-secondary m-2 pay-order"
+      class="btn btn-primary m-2 pay-order"
       href="#"
       data-url="{{ url_for('.pay', id=order.id) }}"
       >支付</a
@@ -42,25 +60,31 @@ status_name %} {% extends "base.html" %} {% block title %}
       >修改</a
     >
     <a
-      class="btn btn-outline-secondary m-2 cancel-order"
+      class="btn btn-outline-danger m-2 cancel-order"
       href="#"
       data-url="{{ url_for('.cancel', id=order.id) }}"
       >取消</a
     >
     {% elif order.status == 'delivered' %}
     <a
-      class="btn btn-outline-secondary m-2 receive-order"
+      class="btn btn-primary m-2 receive-order"
       href="#"
       data-url="{{ url_for('.receive', id=order.id) }}"
       >确认收货</a
     >
     <a class="btn btn-outline-secondary m-2" href="#">退货</a>
     {% elif order.status == 'received' %}
-    <a class="btn btn-outline-secondary m-2" href="{{ url_for('.comment', id=order.id) }}">评价</a>
+    <a class="btn btn-outline-primary m-2" href="{{ url_for('.comment', id=order.id) }}">评价</a>
     {% endif %}
   </div>
 </div>
-{% endfor %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="empty-state__title">你还没有订单</div>
+  <p class="empty-state__text">先去挑点喜欢的，第一单很快就来了。</p>
+</div>
+{% endif %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
 'ceil')|int, request.args.get('page', '1')|int, '.index') }} {% endblock %} {%
 block js %} {{ super() }}
 <script>

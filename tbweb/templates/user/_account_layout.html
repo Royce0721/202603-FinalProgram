@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block body %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page">个人中心</li>
+  </ol>
+</nav>
+
+<div class="page-hero">
+  <div class="page-hero__title">{{ page_title }}</div>
+  <p class="page-hero__text">{{ page_text }}</p>
+</div>
+
+<div class="account-grid">
+  <aside class="account-nav">
+    <div class="account-nav__title">个人中心</div>
+    <div class="d-flex align-items-center mb-3">
+      <div class="account-avatar mr-3">
+        {% if current_user.avatar %}
+        <img src="{{ file_url(current_user.avatar) }}" alt="{{ current_user.username }}" />
+        {% else %}
+        <span class="font-weight-bold text-primary">{{ current_user.username[:1] }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <div class="font-weight-bold">{{ current_user.username }}</div>
+        <div class="text-muted small">当前余额 ¥{{ current_user.wallet_money }}</div>
+      </div>
+    </div>
+    <div class="list-group">
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('user.profile') else '' }}" href="{{ url_for('user.profile') }}">编辑资料</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('user.avatar') else '' }}" href="{{ url_for('user.avatar') }}">设置头像</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('user.password') else '' }}" href="{{ url_for('user.password') }}">修改密码</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('user.wallet') or request.path == url_for('user.wallet_transactions') else '' }}" href="{{ url_for('user.wallet') }}">钱包</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path.startswith('/addresses') else '' }}" href="{{ url_for('address.index') }}">收货地址</a>
+    </div>
+  </aside>
+  <section class="account-panel">
+    <div class="account-panel__body">
+      {% block account_body %}{% endblock %}
+    </div>
+  </section>
+</div>
+{% endblock %}

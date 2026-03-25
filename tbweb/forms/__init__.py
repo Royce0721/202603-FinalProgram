@@ -1,5 +1,5 @@
 from .address import AddressForm
-from .admin import AdminOrderForm, AdminUserForm
+from .admin import AdminOrderForm, AdminUserForm, RecommendationForm
 from .cart_product import CartProductForm
 from .order import OrderForm
 from .product import ProductForm

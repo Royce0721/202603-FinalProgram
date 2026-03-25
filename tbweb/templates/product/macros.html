@@ -1,7 +1,7 @@
 <!-- templates/product/macros.html -->
 
-{% from 'macros.html' import file_url %} {% macro product(item) -%}
-<div class="product-card">
+{% from 'macros.html' import file_url %} {% macro product(item, extra_class='') -%}
+<div class="product-card {{ extra_class }}">
   <a class="product-card__link" href="{{ url_for('product.detail', id=item['id']) }}">
     <div class="product-card__image-wrap">
       <img class="product-card__image" src="{{ file_url(item['cover']) }}" alt="{{ item['title'] }}" />

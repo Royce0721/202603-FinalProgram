@@ -15,38 +15,38 @@ title %}
   </ol>
 </nav>
 
-<div class="row">
-  <div class="col-4">
-    <a href="{{ url_for('product.detail', id=product['id']) }}">
-      <img class="w-100" src="{{ file_url(product['cover']) }}" />
-    </a>
+<div class="detail-hero">
+  <div class="row align-items-center">
+  <div class="col-lg-5 mb-4 mb-lg-0">
+    <div class="detail-media">
+      <a href="{{ url_for('product.detail', id=product['id']) }}">
+        <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+      </a>
+    </div>
   </div>
-  <div class="col-8 d-flex flex-column justify-content-around">
+  <div class="col-lg-7 d-flex flex-column justify-content-around">
     <div>
-      <h5>{{ product['title'] }}</h5>
-      <p>{{ product['description'] or '暂无描述' }}</p>
+      <span class="badge-soft mb-3">店铺商品</span>
+      <h1 class="mb-3" style="font-size: 2.2rem; font-weight: 800;">{{ product['title'] }}</h1>
+      <p class="text-secondary mb-0">{{ product['description'] or '暂无描述' }}</p>
     </div>
     <div>
-      <p>
-        价格：<span class="text-monospace text-success"
-          >¥{{ product['price'] }}</span
-        >
-      </p>
-      <p>
-        数量：<span class="text-monospace text-success"
-          >{{ product['amount'] }}</span
-        >
-      </p>
+      <div class="detail-price">¥{{ product['price'] }}</div>
+      <div class="detail-meta">
+        <span class="detail-chip">库存 {{ product['amount'] }}</span>
+        <a class="detail-chip" href="{{ url_for('shop.detail', id=product['shop']['id']) }}">店铺：{{ product['shop']['name'] }}</a>
+      </div>
       {% if current_user.is_authenticated and product['shop']['user_id'] == current_user.id %}
       <button class="btn btn-secondary" type="button" disabled>这是你店铺的商品</button>
       {% else %}
       <a
-        class="btn btn-primary"
+        class="btn btn-primary btn-lg"
         href="{{ url_for('cart_product.add', product_id=product['id']) }}"
         >加入购物车</a
       >
       {% endif %}
     </div>
+  </div>
   </div>
 </div>
 {% endblock %}

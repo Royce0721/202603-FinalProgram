@@ -11,12 +11,21 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
   </ol>
 </nav>
 
-<div class="d-flex justify-content-end">
-  <form class="form-inline">
-    <label class="sr-only" for="keywords">关键词</label>
-    <input type="text" value="{{ keywords }}" class="form-control mb-2 mr-sm-2" id="keywords" name="keywords" placeholder="搜索商品">
-    <button type="submit" class="btn btn-primary mb-2">搜索</button>
-    <a class="btn btn-secondary mb-2 ml-2" href="{{ url_for('.index') }}">清空</a>
+<div class="page-hero">
+  <div class="page-hero__title">商品广场</div>
+  <p class="page-hero__text">想买什么，先慢慢挑。</p>
+</div>
+
+<div class="search-panel mb-4">
+  <form class="form-row align-items-end">
+    <div class="col-md-8 mb-2 mb-md-0">
+      <label class="sr-only" for="keywords">关键词</label>
+      <input type="text" value="{{ keywords }}" class="form-control" id="keywords" name="keywords" placeholder="搜索商品名称或描述">
+    </div>
+    <div class="col-md-4 d-flex">
+      <button type="submit" class="btn btn-primary mr-2">搜索</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('.index') }}">清空</a>
+    </div>
   </form>
 </div>
 
@@ -31,7 +40,7 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
     {% if keywords %}
     没有搜索到和“{{ keywords }}”相关的商品，换个关键词试试吧。
     {% else %}
-    当前还没有可展示的商品。
+    暂时还没有上架的商品。
     {% endif %}
   </p>
 </div>

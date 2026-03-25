@@ -163,6 +163,9 @@ def create():
             if item.get('product') is None:
                 flash('购物车中存在已失效商品，请刷新后重试', 'danger')
                 return redirect(url_for('cart_product.index'))
+            if item['product']['shop']['user_id'] == int(current_user.get_id()):
+                flash('不能购买自己店铺的商品，请先从购物车中移除', 'danger')
+                return redirect(url_for('cart_product.index'))
             if item['amount'] > item['product']['amount']:
                 flash('商品“{}”数量不足'.format(item['product']['title']), 'danger')
                 return _render_create_page(form, cart_products)
@@ -269,6 +272,8 @@ def pay(id):
         product = products.get(str(order_product['product_id']))
         if product is None:
             return json_response(ResponseCode.NOT_FOUND, '订单商品不存在')
+        if product['shop']['user_id'] == current_user_id:
+            return json_response(ResponseCode.ERROR, '不能购买自己店铺的商品')
         if product['amount'] < order_product['amount']:
             return json_response(ResponseCode.QUANTITY_EXCEEDS_LIMIT, '商品库存不足')
         resp = TbUser(current_app).post_json('/wallet_transactions', json={
@@ -305,6 +310,29 @@ def cancel(id):
     resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
         'status': 'cancelled',
     })
+
+    return json_response(resp['code'], resp['message'], **resp['data'])
+
+
+@order.route('/<int:id>/receive', methods=['POST'])
+@login_required
+def receive(id):
+    """确认收货
+    """
+
+    current_user_id = int(current_user.get_id())
+    resp = TbBuy(current_app).get_json('/orders/{}'.format(id), check_code=False)
+    order_data = resp.get('data', {}).get('order')
+    if order_data is None or order_data['user_id'] != current_user_id:
+        return json_response(ResponseCode.NOT_FOUND)
+    if order_data['status'] != 'delivered':
+        return json_response(ResponseCode.ERROR, '订单状态不允许确认收货')
+
+    resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
+        'status': 'received',
+    }, check_code=False)
+    if resp['code'] == 0:
+        flash('确认收货成功', 'success')
 
     return json_response(resp['code'], resp['message'], **resp['data'])
 

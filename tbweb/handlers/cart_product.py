@@ -95,11 +95,16 @@ def add(product_id):
 
     resp = TbMall(current_app).get_json('/products/{}'.format(product_id))
     product = resp['data']['product']
+    is_own_product = product['shop']['user_id'] == int(current_user.get_id())
 
     form = CartProductForm(data={
         'product_id': product_id,
         'amount': 1,
     })
+
+    if is_own_product:
+        flash('不能购买自己店铺的商品', 'danger')
+        return redirect(url_for('product.detail', id=product_id))
 
     if form.validate_on_submit():
         resp = TbBuy(current_app).post_json('/cart_products', json={
@@ -114,7 +119,7 @@ def add(product_id):
         flash('加入购物车成功', 'success')
         return redirect(url_for('.index'))
 
-    return render_template('cart_product/add.html', form=form, product=product)
+    return render_template('cart_product/add.html', form=form, product=product, is_own_product=is_own_product)
 
 
 @cart_product.route('/<int:id>/delete', methods=['POST'])

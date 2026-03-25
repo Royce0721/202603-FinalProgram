@@ -7,6 +7,10 @@ block title %}
 <div class="form w-50 mx-auto my-5">
   <h5>添加商品到购物车</h5>
   <p class="text-info">{{ product['title'] }}</p>
+  {% if is_own_product %}
+  <div class="alert alert-warning">这是你自己店铺的商品，不能加入购物车。</div>
+  {% else %}
   {{ form_macro(form) }}
+  {% endif %}
 </div>
 {% endblock %}

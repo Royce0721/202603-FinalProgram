@@ -1,0 +1,16 @@
+Flask>=3.0,<4
+
+Flask-Login>=0.6.3,<1
+Flask-Migrate>=4.0,<5
+Flask-PyMongo>=3.0.1,<4
+Flask-SQLAlchemy>=3.1,<4
+Flask-WTF>=1.2,<2
+
+gevent>=23.9.1,<26
+
+Jinja2>=3.1.2,<4
+
+marshmallow>=3.20.2,<5
+requests>=2.31,<3
+
+mysqlclient>=2.2,<3

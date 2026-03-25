@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import file_url %}
+
+{% block body %}
+<div class="container mt-4">
+    <h3 class="mb-3">推荐商品</h3>
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ file_url(product.cover) }}" class="card-img-top" alt="{{ product.title }}" style="height: 220px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    <p class="card-text">{{ product.description or '暂无商品描述' }}</p>
+                    <p class="card-text text-danger">￥{{ product.price }}</p>
+                    <a href="/products/{{ product.id }}" class="btn btn-primary btn-sm">查看详情</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3 class="mb-3 mt-5">推荐店铺</h3>
+    <div class="row">
+        {% for shop in shops %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <img src="{{ file_url(shop.cover) }}" class="card-img-top" alt="{{ shop.name }}" style="height: 220px; object-fit: cover;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ shop.name }}</h5>
+                    <p class="card-text">{{ shop.description or '暂无店铺介绍' }}</p>
+                    <a href="/shops/{{ shop.id }}" class="btn btn-outline-primary btn-sm">进入店铺</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

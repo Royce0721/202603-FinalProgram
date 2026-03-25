@@ -1,0 +1,85 @@
+{% from 'macros.html' import pagination %} {% from 'order/macros.html' import
+status_name %} {% extends "base.html" %} {% block title %}
+<title>{{ config['SITE_NAME'] }} - 店铺订单</title>
+{% endblock %} {% block body %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('shop.mine') }}">我的店铺</a></li>
+    <li class="breadcrumb-item active" aria-current="page">店铺订单</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-1">店铺订单</h4>
+    <p class="text-muted mb-0">当前店铺：{{ shop['name'] }}</p>
+  </div>
+</div>
+
+{% if orders %}
+{% for order in orders %}
+<div class="border rounded p-4 bg-white mb-4">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <div><strong>订单ID：</strong>#{{ order['id'] }}</div>
+      <div><strong>状态：</strong><span class="text-danger">{{ status_name(order['status']) }}</span></div>
+      <div><strong>金额：</strong>¥{{ order['pay_amount'] }}</div>
+    </div>
+    <div class="text-right">
+      <a class="btn btn-outline-primary btn-sm" href="{{ url_for('order.seller_detail', id=order['id']) }}">查看详情</a>
+      {% if order['seller_can_deliver'] %}
+      <a class="btn btn-primary btn-sm ml-2 seller-deliver-order" href="#" data-url="{{ url_for('order.seller_deliver', id=order['id']) }}">发货</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mb-2"><strong>收货地址：</strong>{{ order['address']['address'] if order['address'] else '-' }}</div>
+  <div class="mb-3"><strong>联系电话：</strong>{{ order['address']['phone'] if order['address'] else '-' }}</div>
+
+  <div class="row">
+    {% for order_product in order['seller_order_products'] %}
+    <div class="col-md-6 mb-3">
+      <div class="border rounded p-3 h-100">
+        <div><strong>{{ order_product['product']['title'] if order_product['product'] else '商品已失效' }}</strong></div>
+        <div class="text-muted">数量：{{ order_product['amount'] }}</div>
+        <div class="text-muted">单价：¥{{ order_product['price'] }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if order['status'] == 'paied' and not order['seller_can_deliver'] %}
+  <div class="alert alert-warning mb-0">这是跨店铺订单，当前版本暂不支持由单个店主直接整单发货。</div>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="empty-state__title">还没有店铺订单</div>
+  <p class="empty-state__text">等有用户购买你的商品后，这里就会出现订单。</p>
+</div>
+{% endif %}
+
+{{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int,
+request.args.get('page', '1')|int, '.seller_index') }} {% endblock %} {% block js %} {{ super() }}
+<script>
+  $(document).ready(function () {
+    $('.seller-deliver-order').click(function () {
+      if (confirm('确认发货？')) {
+        $.ajax({
+          url: $(this).data('url'),
+          type: 'POST',
+          success: function (result) {
+            if (result['code'] == 0) {
+              location.reload();
+            } else {
+              alert(result['message']);
+            }
+          },
+        });
+      }
+    });
+  });
+</script>
+{% endblock %}

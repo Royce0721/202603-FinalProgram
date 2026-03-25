@@ -16,6 +16,9 @@ def create_shop():
     """创建店铺
     """
     data = request.get_json()
+    existing_shop = db.session.query(Shop).filter(Shop.user_id == data.get('user_id')).first()
+    if existing_shop is not None:
+        return json_response(ResponseCode.ERROR, '一个用户只能创建一个店铺')
 
     shop = ShopSchema().load(data)
     db.session.add(shop)

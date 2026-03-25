@@ -13,6 +13,15 @@ def _render_create_page(form, cart_products):
     return render_template('order/create.html', form=form, cart_products=cart_products)
 
 
+def get_current_user_shop():
+    resp = TbMall(current_app).get_json('/shops', params={
+        'user_id': current_user.get_id(),
+        'limit': 1,
+    }, check_code=False)
+    shops = resp.get('data', {}).get('shops', [])
+    return shops[0] if shops else None
+
+
 @order.route('')
 @login_required
 def index():
@@ -65,6 +74,50 @@ def full_order_info(orders):
         order_item['address'] = addresses.get(str(order_item['address_id']))
         for order_product in order_item['order_products']:
             order_product['product'] = products.get(str(order_product['product_id']))
+
+    return orders
+
+
+def seller_order_scope(orders, shop):
+    scoped_orders = []
+    for order_item in orders:
+        seller_products = []
+        all_products_belong_to_shop = True
+        for order_product in order_item['order_products']:
+            product = order_product.get('product')
+            if product is None:
+                all_products_belong_to_shop = False
+                continue
+            if product['shop']['id'] == shop['id']:
+                seller_products.append(order_product)
+            else:
+                all_products_belong_to_shop = False
+
+        if seller_products:
+            order_item['seller_order_products'] = seller_products
+            order_item['seller_can_deliver'] = all_products_belong_to_shop and order_item['status'] == 'paied'
+            scoped_orders.append(order_item)
+
+    return scoped_orders
+
+
+def fetch_all_orders():
+    limit = 100
+    offset = 0
+    total = None
+    orders = []
+
+    while total is None or offset < total:
+        resp = TbBuy(current_app).get_json('/orders', params={
+            'limit': limit,
+            'offset': offset,
+        }, check_code=False)
+        batch = resp.get('data', {}).get('orders', [])
+        total = resp.get('data', {}).get('total', 0)
+        orders.extend(batch)
+        if not batch:
+            break
+        offset += limit
 
     return orders
 
@@ -254,3 +307,74 @@ def cancel(id):
     })
 
     return json_response(resp['code'], resp['message'], **resp['data'])
+
+
+@order.route('/seller')
+@login_required
+def seller_index():
+    shop = get_current_user_shop()
+    if shop is None:
+        flash('你还没有店铺，先去开店吧', 'info')
+        return redirect(url_for('shop.create'))
+
+    all_orders = fetch_all_orders()
+    all_orders = full_order_info(all_orders)
+    seller_orders = seller_order_scope(all_orders, shop)
+
+    page = request.args.get('page', 1, type=int)
+    limit = current_app.config['PAGINATION_PER_PAGE']
+    offset = (page - 1) * limit
+    total = len(seller_orders)
+    page_orders = seller_orders[offset: offset + limit]
+
+    return render_template('order/seller_index.html', shop=shop, orders=page_orders, total=total)
+
+
+@order.route('/seller/<int:id>')
+@login_required
+def seller_detail(id):
+    shop = get_current_user_shop()
+    if shop is None:
+        flash('你还没有店铺，先去开店吧', 'info')
+        return redirect(url_for('shop.create'))
+
+    resp = TbBuy(current_app).get_json('/orders/{}'.format(id), check_code=False)
+    order_data = resp.get('data', {}).get('order')
+    if order_data is None:
+        flash('订单不存在', 'danger')
+        return redirect(url_for('.seller_index'))
+
+    scoped_orders = seller_order_scope(full_order_info([order_data]), shop)
+    if not scoped_orders:
+        flash('你无权查看该订单', 'danger')
+        return redirect(url_for('.seller_index'))
+
+    return render_template('order/seller_detail.html', shop=shop, order=scoped_orders[0])
+
+
+@order.route('/seller/<int:id>/deliver', methods=['POST'])
+@login_required
+def seller_deliver(id):
+    shop = get_current_user_shop()
+    if shop is None:
+        return json_response(ResponseCode.NOT_FOUND)
+
+    resp = TbBuy(current_app).get_json('/orders/{}'.format(id), check_code=False)
+    order_data = resp.get('data', {}).get('order')
+    if order_data is None:
+        return json_response(ResponseCode.NOT_FOUND)
+
+    scoped_orders = seller_order_scope(full_order_info([order_data]), shop)
+    if not scoped_orders:
+        return json_response(ResponseCode.NOT_FOUND)
+
+    order_data = scoped_orders[0]
+    if not order_data.get('seller_can_deliver'):
+        return json_response(ResponseCode.ERROR, '当前订单状态不允许发货，或这是跨店铺订单')
+
+    update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
+        'status': 'delivered',
+    }, check_code=False)
+    if update_resp['code'] == 0:
+        flash('发货成功', 'success')
+    return json_response(update_resp['code'], update_resp['message'], **update_resp['data'])

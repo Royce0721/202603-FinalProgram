@@ -24,7 +24,9 @@
           <td>¥{{ user['wallet_money'] }}</td>
           <td>
             {% if user['shop'] %}
-            <a href="{{ url_for('shop.detail', id=user['shop']['id']) }}">店铺 #{{ user['shop']['id'] }}</a>
+            <a href="{{ url_for('shop.detail', id=user['shop']['id']) }}">
+              店铺 #{{ user['shop']['id'] }} {{ user['shop']['name'] }}
+            </a>
             {% else %}
             <span class="text-muted">无店铺</span>
             {% endif %}

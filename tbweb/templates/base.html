@@ -22,6 +22,118 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='bootstrap.min.css') }}"
     />
+    <style>
+      .product-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: stretch;
+      }
+
+      .product-card {
+        width: 250px;
+        min-height: 340px;
+        display: flex;
+        flex-direction: column;
+        margin: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        background: #fff;
+      }
+
+      .product-card__link {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .product-card__image-wrap {
+        width: 100%;
+        height: 180px;
+        overflow: hidden;
+        border-radius: 0.35rem;
+        background: #f8f9fa;
+      }
+
+      .product-card__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .product-card__title {
+        height: 3rem;
+        margin: 0.75rem 0 0;
+        overflow: hidden;
+        line-height: 1.5rem;
+        color: #212529;
+      }
+
+      .product-card__meta {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .product-card__shop {
+        flex: 1;
+        min-width: 0;
+        text-align: right;
+      }
+
+      .product-card__shop-link {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .shop-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        min-height: 180px;
+      }
+
+      .shop-card__image-wrap {
+        width: 96px;
+        height: 96px;
+        flex: 0 0 96px;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        background: #f8f9fa;
+      }
+
+      .shop-card__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .shop-card__body {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .shop-card__title {
+        margin: 0 0 0.5rem;
+      }
+
+      .shop-card__owner {
+        margin-bottom: 0.5rem;
+      }
+
+      .shop-card__description {
+        margin-bottom: 0;
+        max-height: 4.5rem;
+        overflow: hidden;
+        line-height: 1.5rem;
+      }
+    </style>
     {% endblock %}
   </head>
 

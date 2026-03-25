@@ -1,15 +1,16 @@
 <!-- templates/shop/macros.html -->
 
 {% from 'macros.html' import file_url %} {% macro shop(item) -%}
-<div class="media">
-  <img class="mr-3" style="width: 70px" src="{{ file_url(item['cover']) }}" />
-  <div class="media-body">
+<div class="shop-card">
+  <div class="shop-card__image-wrap">
+    <img class="shop-card__image" src="{{ file_url(item['cover']) }}" alt="{{ item['name'] }}" />
+  </div>
+  <div class="shop-card__body">
     <a href="{{ url_for('shop.detail', id=item['id']) }}">
-      <h5 class="mt-0">{{ item['name'] }}</h5>
+      <h5 class="shop-card__title">{{ item['name'] }}</h5>
     </a>
-    <p class="text-secondary">店主：{{ item['user']['username'] }}</p>
-    <p class="text-secondary">{{ item['description'] }}</p>
+    <p class="text-secondary shop-card__owner">店主：{{ item['user']['username'] }}</p>
+    <p class="text-secondary shop-card__description">{{ item['description'] or '暂无店铺介绍' }}</p>
   </div>
 </div>
 {%- endmacro %}
-

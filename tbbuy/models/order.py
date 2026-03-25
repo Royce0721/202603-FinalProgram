@@ -47,6 +47,5 @@ class OrderSchema(Schema):
     updated_at = fields.DateTime()
 
     @post_load
-    def make_order(self, data):
+    def make_order(self, data, **kwargs):
         return Order(**data)
-

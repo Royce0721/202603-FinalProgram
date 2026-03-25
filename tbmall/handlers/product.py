@@ -43,8 +43,12 @@ def product_list():
         query = query.filter(Product.shop_id == shop_id)
 
     if keywords != '':
+        like_keywords = '%{}%'.format(keywords)
         query = query.filter(
-            or_(Product.title.match(keywords), Product.description.match(keywords))
+            or_(
+                Product.title.ilike(like_keywords),
+                Product.description.ilike(like_keywords)
+            )
         )
 
     total = query.count()

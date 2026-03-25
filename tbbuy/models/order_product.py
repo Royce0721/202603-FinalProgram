@@ -32,5 +32,5 @@ class OrderProductSchema(Schema):
     updated_at = fields.DateTime()
 
     @post_load
-    def make_order_product(self, data):
+    def make_order_product(self, data, **kwargs):
         return OrderProduct(**data)

@@ -1,17 +1,17 @@
 <!-- templates/product/macros.html -->
 
 {% from 'macros.html' import file_url %} {% macro product(item) -%}
-<div class="m-2 p-2 border" style="width: 250px;">
-  <a href="{{ url_for('product.detail', id=item['id']) }}">
-    <img class="w-100" src="{{ file_url(item['cover']) }}" />
-    <p class="text-truncate">{{ item['title'] }}</p>
+<div class="product-card">
+  <a class="product-card__link" href="{{ url_for('product.detail', id=item['id']) }}">
+    <div class="product-card__image-wrap">
+      <img class="product-card__image" src="{{ file_url(item['cover']) }}" alt="{{ item['title'] }}" />
+    </div>
+    <p class="product-card__title">{{ item['title'] }}</p>
   </a>
-  <div class="d-flex justify-content-between">
+  <div class="product-card__meta">
     <span class="text-monospace text-info">¥{{ item['price'] }}</span>
-    <a href="{{ url_for('shop.detail', id=item['shop']['id']) }}">
-      <span class="d-inline-block text-truncate"
-        >{{ item['shop']['name'] }}</span
-      >
+    <a class="product-card__shop product-card__shop-link" href="{{ url_for('shop.detail', id=item['shop']['id']) }}">
+      {{ item['shop']['name'] }}
     </a>
   </div>
 </div>

@@ -12,20 +12,7 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
   </ol>
 </nav>
 
-{% for shop in shops %}
-<div class="row py-3 border-bottom">
-  <div class="col-6 col-md-4 col-lg-3">
-    {{ shop_macro(shop) }}
-  </div>
-  <div class="col-6 col-md-8 col-lg-9">
-    <div class="d-flex flex-wrap">
-      {% for product in shop.get('products', [])[:3] %} {{
-      product_macro(product) }} {% endfor %}
-    </div>
-  </div>
-</div>
-
-<div class="d-flex justify-content-end">
+<div class="d-flex justify-content-end mb-3">
   <form class="form-inline">
     <label class="sr-only" for="keywords">关键词</label>
     <input type="text" value="{{ keywords }}" class="form-control mb-2 mr-sm-2" id="keywords" name="keywords" placeholder="搜索店铺">
@@ -34,5 +21,17 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
   </form>
 </div>
 
+{% for shop in shops %}
+<div class="row py-3 border-bottom">
+  <div class="col-6 col-md-4 col-lg-3">
+    {{ shop_macro(shop) }}
+  </div>
+  <div class="col-6 col-md-8 col-lg-9">
+    <div class="product-grid justify-content-start">
+      {% for product in shop.get('products', [])[:3] %} {{
+      product_macro(product) }} {% endfor %}
+    </div>
+  </div>
+</div>
 {% endfor %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
 'ceil')|int, request.args.get('page', '1')|int, '.index') }} {% endblock %}

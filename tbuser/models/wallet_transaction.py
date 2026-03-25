@@ -35,5 +35,5 @@ class WalletTransactionSchema(Schema):
     updated_at = fields.DateTime()
 
     @post_load
-    def make_user(self, data):
+    def make_user(self, data, **kwargs):
         return WalletTransaction(**data)

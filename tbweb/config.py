@@ -18,6 +18,8 @@ class BaseConfig(object):
 
     SITE_NAME = '仁爱购物网'
     PAGINATION_PER_PAGE = 20
+    ADMIN_USERNAMES = [v.strip() for v in env('ADMIN_USERNAMES', 'admin').split(',') if v.strip()]
+    ADMIN_USER_IDS = [int(v.strip()) for v in env('ADMIN_USER_IDS', '').split(',') if v.strip()]
 
     DOMAIN_TBFILE = env('DOMAIN_TBFILE', 'http://localhost:5040')
 

@@ -1,0 +1,25 @@
+{% from 'macros.html' import pagination %} {% extends "base.html" %}
+{% block body %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page">管理员后台</li>
+  </ol>
+</nav>
+
+<div class="row">
+  <div class="col-lg-3 mb-4">
+    <div class="list-group shadow-sm">
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.index') else '' }}" href="{{ url_for('admin.index') }}">后台总览</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.users') else '' }}" href="{{ url_for('admin.users') }}">用户管理</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.shops') else '' }}" href="{{ url_for('admin.shops') }}">店铺管理</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.products') else '' }}" href="{{ url_for('admin.products') }}">商品管理</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.orders') else '' }}" href="{{ url_for('admin.orders') }}">订单管理</a>
+      <a class="list-group-item list-group-item-action {{ 'active' if request.path == url_for('admin.transactions') else '' }}" href="{{ url_for('admin.transactions') }}">交易管理</a>
+    </div>
+  </div>
+  <div class="col-lg-9 mb-4">
+    {% block admin_body %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

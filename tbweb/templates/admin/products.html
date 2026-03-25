@@ -1,0 +1,34 @@
+{% from 'macros.html' import pagination %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 商品管理</title>{% endblock %}
+{% block admin_body %}
+<div class="border rounded p-4 bg-white">
+  <h4 class="mb-3">商品管理</h4>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>商品ID</th>
+          <th>商品名称</th>
+          <th>店铺ID</th>
+          <th>所属店铺</th>
+          <th>价格</th>
+          <th>库存</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>#{{ product['id'] }}</td>
+          <td><a href="{{ url_for('product.detail', id=product['id']) }}">{{ product['title'] }}</a></td>
+          <td>#{{ product['shop_id'] }}</td>
+          <td>{{ product['shop']['name'] if product['shop'] else '-' }}</td>
+          <td>¥{{ product['price'] }}</td>
+          <td>{{ product['amount'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.products') }}
+</div>
+{% endblock %}

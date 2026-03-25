@@ -1,0 +1,36 @@
+{% from 'macros.html' import pagination %} {% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 订单管理</title>{% endblock %}
+{% block admin_body %}
+<div class="border rounded p-4 bg-white">
+  <h4 class="mb-3">订单管理</h4>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>订单ID</th>
+          <th>用户ID</th>
+          <th>用户名</th>
+          <th>地址ID</th>
+          <th>支付金额</th>
+          <th>状态</th>
+          <th>创建时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>#{{ order['id'] }}</td>
+          <td>#{{ order['user_id'] }}</td>
+          <td>{{ order['user']['username'] if order['user'] else '-' }}</td>
+          <td>#{{ order['address_id'] }}</td>
+          <td>¥{{ order['pay_amount'] }}</td>
+          <td>{{ order['status'] }}</td>
+          <td>{{ order['created_at'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int, page, 'admin.orders') }}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "admin/layout.html" %}
+{% block title %}<title>{{ config['SITE_NAME'] }} - 管理员后台</title>{% endblock %}
+{% block admin_body %}
+<div class="mb-4">
+  <h3 class="mb-1">平台总览</h3>
+  <p class="text-muted mb-0">这里可以快速看到整个平台的核心数据。</p>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-xl-4 mb-3">
+    <div class="border rounded p-4 bg-white h-100">
+      <div class="text-muted">用户总数</div>
+      <div class="display-4">{{ stats['users'] }}</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-4 mb-3">
+    <div class="border rounded p-4 bg-white h-100">
+      <div class="text-muted">店铺总数</div>
+      <div class="display-4">{{ stats['shops'] }}</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-4 mb-3">
+    <div class="border rounded p-4 bg-white h-100">
+      <div class="text-muted">商品总数</div>
+      <div class="display-4">{{ stats['products'] }}</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-4 mb-3">
+    <div class="border rounded p-4 bg-white h-100">
+      <div class="text-muted">订单总数</div>
+      <div class="display-4">{{ stats['orders'] }}</div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-4 mb-3">
+    <div class="border rounded p-4 bg-white h-100">
+      <div class="text-muted">交易总数</div>
+      <div class="display-4">{{ stats['transactions'] }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-2">
+  <div class="col-lg-4 mb-4">
+    <div class="border rounded p-4 bg-white h-100">
+      <h5 class="mb-3">最新用户</h5>
+      {% if recent_users %}
+      {% for user in recent_users %}
+      <div class="mb-2">#{{ user['id'] }} {{ user['username'] }}</div>
+      {% endfor %}
+      {% else %}
+      <div class="text-muted">暂无用户</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4 mb-4">
+    <div class="border rounded p-4 bg-white h-100">
+      <h5 class="mb-3">最新店铺</h5>
+      {% if recent_shops %}
+      {% for shop in recent_shops %}
+      <div class="mb-2">#{{ shop['id'] }} {{ shop['name'] }}</div>
+      {% endfor %}
+      {% else %}
+      <div class="text-muted">暂无店铺</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4 mb-4">
+    <div class="border rounded p-4 bg-white h-100">
+      <h5 class="mb-3">最新商品</h5>
+      {% if recent_products %}
+      {% for product in recent_products %}
+      <div class="mb-2">#{{ product['id'] }} {{ product['title'] }}</div>
+      {% endfor %}
+      {% else %}
+      <div class="text-muted">暂无商品</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -185,6 +185,32 @@ def mine():
     return render_template('shop/mine.html', form=form, shop=shop_data, products=products)
 
 
+@shop.route('/mine/delete', methods=['POST'])
+@login_required
+def delete_mine():
+    shop_data = get_current_user_shop()
+    if shop_data is None:
+        flash('你还没有店铺', 'danger')
+        return redirect(url_for('.create'))
+
+    products_resp = TbMall(current_app).get_json('/products', params={
+        'shop_id': shop_data['id'],
+        'limit': 1,
+        'offset': 0,
+    }, check_code=False)
+    if products_resp.get('data', {}).get('total', 0) > 0:
+        flash('店铺下还有商品，请先删除商品后再删除店铺', 'danger')
+        return redirect(url_for('.mine'))
+
+    delete_resp = TbMall(current_app).delete_json('/shops/{}'.format(shop_data['id']), check_code=False)
+    if delete_resp['code'] != 0:
+        flash(delete_resp['message'], 'danger')
+        return redirect(url_for('.mine'))
+
+    flash('店铺删除成功', 'success')
+    return redirect(url_for('common.index'))
+
+
 def full_shop_info(shops):
     user_ids = [shop['user_id'] for shop in shops]
     if len(user_ids) > 0:

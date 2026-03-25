@@ -34,7 +34,10 @@ block title %}
 <div class="border rounded p-4 bg-white mb-5">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0">当前商品</h5>
-    <span class="text-muted">下一步我们可以继续把商品管理页补完整</span>
+    <div>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('product.create') }}">新增商品</a>
+      <a class="btn btn-outline-secondary btn-sm ml-2" href="{{ url_for('product.mine') }}">商品管理</a>
+    </div>
   </div>
 
   {% if products %}
@@ -49,5 +52,13 @@ block title %}
     <p class="empty-state__text">卖家入口已经接好了，下一步很适合继续补“新增商品”和“商品管理”。</p>
   </div>
   {% endif %}
+</div>
+
+<div class="border rounded p-4 bg-white mb-5">
+  <h5 class="mb-3 text-danger">危险操作</h5>
+  <p class="text-muted">只有当店铺下没有商品时，才允许删除店铺。</p>
+  <form method="POST" action="{{ url_for('shop.delete_mine') }}" onsubmit="return confirm('确定要删除店铺吗？删除后无法恢复。');">
+    <button type="submit" class="btn btn-outline-danger">删除店铺</button>
+  </form>
 </div>
 {% endblock %}

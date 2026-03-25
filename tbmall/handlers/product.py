@@ -86,6 +86,20 @@ def product_info(id):
     return json_response(product=ProductSchema().dump(product))
 
 
+@product.route('/<int:id>', methods=['DELETE'])
+def delete_product(id):
+    """删除商品
+    """
+    product = db.session.query(Product).filter(Product.id == id).first()
+    if product is None:
+        return json_response(ResponseCode.NOT_FOUND)
+
+    db.session.delete(product)
+    db.session.commit()
+
+    return json_response()
+
+
 @product.route('/infos', methods=['GET'])
 def product_infos():
     """批量查询商品，查询指定 ID 列表里的多个商品

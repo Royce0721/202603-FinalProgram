@@ -86,6 +86,23 @@ def shop_info(id):
 
     return json_response(shop=ShopSchema().dump(shop))
 
+
+@shop.route('/<int:id>', methods=['DELETE'])
+def delete_shop(id):
+    """删除店铺
+    """
+    shop = db.session.query(Shop).filter(Shop.id == id).first()
+    if shop is None:
+        return json_response(ResponseCode.NOT_FOUND)
+
+    if shop.products.count() > 0:
+        return json_response(ResponseCode.ERROR, '店铺下还有商品，请先删除商品后再删除店铺')
+
+    db.session.delete(shop)
+    db.session.commit()
+
+    return json_response()
+
 @shop.route('/infos', methods=['GET'])
 def shop_infos():
     """批量查询店铺，查询指定 ID 列表里的多个店铺

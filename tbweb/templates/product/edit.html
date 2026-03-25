@@ -1,0 +1,36 @@
+{% from 'macros.html' import form as form_macro, file_url %} {% extends "base.html" %} {%
+block title %}
+<title>{{ config['SITE_NAME'] }} - 编辑商品</title>
+{% endblock %} {% block body %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('shop.mine') }}">我的店铺</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('product.mine') }}">商品管理</a></li>
+    <li class="breadcrumb-item active" aria-current="page">编辑商品</li>
+  </ol>
+</nav>
+
+<div class="row">
+  <div class="col-lg-4 mb-4">
+    <div class="border rounded p-4 bg-white">
+      <h5 class="mb-3">当前图片</h5>
+      {% if product['cover'] %}
+      <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: cover;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state__title">还没有商品图片</div>
+        <p class="empty-state__text">上传一张商品图，会更像真正的电商页面。</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-8 mb-4">
+    <div class="border rounded p-4 bg-white">
+      <h5 class="mb-3">编辑“{{ product['title'] }}”</h5>
+      {{ form_macro(form, enctype='multipart/form-data') }}
+    </div>
+  </div>
+</div>
+{% endblock %}

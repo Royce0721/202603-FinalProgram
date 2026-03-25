@@ -1,0 +1,53 @@
+{% from 'macros.html' import form as form_macro, file_url %} {% from 'product/macros.html' import product as product_macro %} {% extends "base.html" %} {%
+block title %}
+<title>{{ config['SITE_NAME'] }} - 我的店铺</title>
+{% endblock %} {% block body %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">首页</a></li>
+    <li class="breadcrumb-item active" aria-current="page">我的店铺</li>
+  </ol>
+</nav>
+
+<div class="row">
+  <div class="col-lg-5 mb-4">
+    <div class="border rounded p-4 bg-white">
+      <h5 class="mb-3">店铺信息</h5>
+      {% if shop['cover'] %}
+      <img class="img-fluid rounded mb-3" style="width: 100%; height: 220px; object-fit: cover;" src="{{ file_url(shop['cover']) }}" alt="{{ shop['name'] }}" />
+      {% endif %}
+      <p class="mb-2"><strong>店铺名称：</strong>{{ shop['name'] }}</p>
+      <p class="mb-2"><strong>店主：</strong>{{ shop['user']['username'] }}</p>
+      <p class="mb-0"><strong>店铺介绍：</strong>{{ shop['description'] or '暂无店铺介绍' }}</p>
+      <a class="btn btn-outline-primary btn-sm mt-3" href="{{ url_for('shop.detail', id=shop['id']) }}">查看店铺页</a>
+    </div>
+  </div>
+
+  <div class="col-lg-7 mb-4">
+    <div class="border rounded p-4 bg-white">
+      <h5 class="mb-3">编辑店铺</h5>
+      {{ form_macro(form, enctype='multipart/form-data') }}
+    </div>
+  </div>
+</div>
+
+<div class="border rounded p-4 bg-white mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">当前商品</h5>
+    <span class="text-muted">下一步我们可以继续把商品管理页补完整</span>
+  </div>
+
+  {% if products %}
+  <div class="product-grid justify-content-start">
+    {% for product in products %}
+    {{ product_macro(product) }}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state__title">店铺里还没有商品</div>
+    <p class="empty-state__text">卖家入口已经接好了，下一步很适合继续补“新增商品”和“商品管理”。</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

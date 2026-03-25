@@ -11,10 +11,6 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
   </ol>
 </nav>
 
-<div class="product-grid">
-  {% for product in products %} {{ product_macro(product) }} {% endfor %}
-</div>
-
 <div class="d-flex justify-content-end">
   <form class="form-inline">
     <label class="sr-only" for="keywords">关键词</label>
@@ -23,6 +19,23 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
     <a class="btn btn-secondary mb-2 ml-2" href="{{ url_for('.index') }}">清空</a>
   </form>
 </div>
+
+{% if products %}
+<div class="product-grid">
+  {% for product in products %} {{ product_macro(product) }} {% endfor %}
+</div>
+{% else %}
+<div class="empty-state mt-3">
+  <div class="empty-state__title">没有找到相关商品</div>
+  <p class="empty-state__text">
+    {% if keywords %}
+    没有搜索到和“{{ keywords }}”相关的商品，换个关键词试试吧。
+    {% else %}
+    当前还没有可展示的商品。
+    {% endif %}
+  </p>
+</div>
+{% endif %}
 
 {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int,
 request.args.get('page', '1')|int, '.index') }} {% endblock %}

@@ -133,6 +133,41 @@
         overflow: hidden;
         line-height: 1.5rem;
       }
+
+      .empty-state {
+        padding: 2.5rem 1.5rem;
+        border: 1px dashed #ced4da;
+        border-radius: 0.75rem;
+        background: #f8f9fa;
+        text-align: center;
+        color: #6c757d;
+      }
+
+      .empty-state__title {
+        margin-bottom: 0.5rem;
+        color: #343a40;
+        font-weight: 600;
+      }
+
+      .empty-state__text {
+        margin-bottom: 0;
+      }
+
+      .navbar-user {
+        display: inline-flex;
+        align-items: center;
+        max-width: 220px;
+        vertical-align: middle;
+      }
+
+      .navbar-user__name {
+        display: inline-block;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
     </style>
     {% endblock %}
   </head>
@@ -176,7 +211,7 @@
           >
           <div class="d-inline dropdown">
             <button
-              class="btn btn-link dropdown-toggle text-light"
+              class="btn btn-link dropdown-toggle text-light navbar-user"
               type="button"
               id="dropdownMenuButton"
               data-toggle="dropdown"
@@ -190,9 +225,10 @@
                 class="rounded-circle"
                 src="{{ file_url(current_user.avatar) }}"
               />
-              {% endif %} {{ current_user.username }}
+              {% endif %}
+              <span class="navbar-user__name ml-1">{{ current_user.username }}</span>
             </button>
-            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
               <a class="dropdown-item" href="{{ url_for('user.profile') }}"
                 >编辑资料</a
               >
@@ -213,6 +249,16 @@
               <a class="dropdown-item" href="{{ url_for('order.index') }}"
                 >我的订单</a
               >
+              <div class="dropdown-divider"></div>
+              {% if current_user_shop %}
+              <a class="dropdown-item" href="{{ url_for('shop.mine') }}"
+                >我的店铺</a
+              >
+              {% else %}
+              <a class="dropdown-item" href="{{ url_for('shop.create') }}"
+                >我要开店</a
+              >
+              {% endif %}
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ url_for('user.logout') }}"
                 >退出</a
@@ -255,6 +301,29 @@
     <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='popper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <script>
+      (function () {
+        function cleanupBackdrops() {
+          document.querySelectorAll('.modal-backdrop, .dropdown-backdrop').forEach(function (el) {
+            el.remove();
+          });
+
+          if (!document.querySelector('.modal.show')) {
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('padding-right');
+            document.body.style.removeProperty('overflow');
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', cleanupBackdrops);
+        } else {
+          cleanupBackdrops();
+        }
+
+        window.addEventListener('pageshow', cleanupBackdrops);
+      })();
+    </script>
     {% endblock %}
   </body>
 </html>

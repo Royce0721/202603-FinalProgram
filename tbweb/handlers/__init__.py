@@ -26,6 +26,7 @@ def init(app):
     app.register_blueprint(user)
 
     init_login_manager(app)
+    init_context_processor(app)
 
 
 def handle_error(error):
@@ -48,3 +49,26 @@ def init_login_manager(app):
 
     login_manager.login_view = 'user.login'
     login_manager.login_message = "请先登录"
+
+
+def init_context_processor(app):
+    @app.context_processor
+    def inject_current_user_shop():
+        from flask_login import current_user
+        from ..services import TbMall
+
+        if not current_user.is_authenticated:
+            return {'current_user_shop': None}
+
+        try:
+            resp = TbMall(current_app).get_json('/shops', params={
+                'user_id': current_user.get_id(),
+                'limit': 1,
+            }, check_code=False)
+            shops = resp.get('data', {}).get('shops', [])
+        except Exception:
+            shops = []
+
+        return {
+            'current_user_shop': shops[0] if shops else None
+        }

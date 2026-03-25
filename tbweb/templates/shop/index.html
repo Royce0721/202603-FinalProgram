@@ -21,6 +21,7 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
   </form>
 </div>
 
+{% if shops %}
 {% for shop in shops %}
 <div class="row py-3 border-bottom">
   <div class="col-6 col-md-4 col-lg-3">
@@ -33,5 +34,17 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
     </div>
   </div>
 </div>
-{% endfor %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
+{% endfor %}
+{% else %}
+<div class="empty-state">
+  <div class="empty-state__title">没有找到相关店铺</div>
+  <p class="empty-state__text">
+    {% if keywords %}
+    没有搜索到和“{{ keywords }}”相关的店铺，换个关键词试试吧。
+    {% else %}
+    当前还没有可展示的店铺。
+    {% endif %}
+  </p>
+</div>
+{% endif %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
 'ceil')|int, request.args.get('page', '1')|int, '.index') }} {% endblock %}

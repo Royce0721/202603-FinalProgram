@@ -62,5 +62,5 @@ product as product_macro %} {% from 'shop/macros.html' import shop as shop_macro
     {% endif %}
   </p>
 </div>
-{% endif %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
+{% endif %} {{ pagination((total / per_page)|round(0,
 'ceil')|int, request.args.get('page', '1')|int, '.index') }} {% endblock %}

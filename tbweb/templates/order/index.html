@@ -14,7 +14,7 @@ status_name %} {% extends "base.html" %} {% block title %}
 
 <div class="page-hero">
   <div class="page-hero__title">我的订单</div>
-  <p class="page-hero__text">最近买过什么，翻一眼就知道。</p>
+  <p class="page-hero__text">最近下过的单，都在这儿。</p>
 </div>
 
 {% if orders %}
@@ -82,7 +82,7 @@ status_name %} {% extends "base.html" %} {% block title %}
 {% else %}
 <div class="empty-state">
   <div class="empty-state__title">你还没有订单</div>
-  <p class="empty-state__text">先去挑点喜欢的，第一单很快就来了。</p>
+  <p class="empty-state__text">先去挑点喜欢的吧。</p>
 </div>
 {% endif %} {{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0,
 'ceil')|int, request.args.get('page', '1')|int, '.index') }} {% endblock %} {%

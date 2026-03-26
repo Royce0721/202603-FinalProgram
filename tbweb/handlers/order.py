@@ -2,11 +2,38 @@ from flask import Blueprint, request, current_app, render_template, redirect, ur
 from flask_login import login_required, current_user
 
 from tblib.handler import json_response, ResponseCode
+from tblib.redis import redis
 
 from ..forms import OrderForm, ReviewForm
 from ..services import TbBuy, TbUser, TbMall
 
 order = Blueprint('order', __name__, url_prefix='/orders')
+
+
+def delivered_shops_key(order_id):
+    return f'order:{order_id}:delivered_shops'
+
+
+def get_delivered_shop_ids(order_id):
+    delivered_shop_ids = set()
+    for raw_shop_id in redis.smembers(delivered_shops_key(order_id)):
+        try:
+            delivered_shop_ids.add(int(raw_shop_id))
+        except (TypeError, ValueError):
+            continue
+    return delivered_shop_ids
+
+
+def clear_delivered_shop_ids(order_id):
+    redis.delete(delivered_shops_key(order_id))
+
+
+def seller_deliver_response(resp):
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return json_response(resp.get('code', 0), resp.get('message', ''), **resp.get('data', {}))
+    if resp.get('code', 0) != 0:
+        flash(resp.get('message', '发货失败'), 'danger')
+    return redirect(url_for('.seller_detail', id=request.view_args['id']))
 
 
 def _render_create_page(form, cart_products):
@@ -95,21 +122,26 @@ def full_order_info(orders):
 def seller_order_scope(orders, shop):
     scoped_orders = []
     for order_item in orders:
+        delivered_shop_ids = get_delivered_shop_ids(order_item['id'])
+        all_shop_ids = set()
         seller_products = []
-        all_products_belong_to_shop = True
         for order_product in order_item['order_products']:
             product = order_product.get('product')
             if product is None:
-                all_products_belong_to_shop = False
                 continue
-            if product['shop']['id'] == shop['id']:
+            product_shop_id = product['shop']['id']
+            all_shop_ids.add(product_shop_id)
+            if product_shop_id == shop['id']:
                 seller_products.append(order_product)
-            else:
-                all_products_belong_to_shop = False
 
         if seller_products:
             order_item['seller_order_products'] = seller_products
-            order_item['seller_can_deliver'] = all_products_belong_to_shop and order_item['status'] == 'paied'
+            order_item['seller_delivered'] = shop['id'] in delivered_shop_ids
+            order_item['seller_can_deliver'] = (
+                order_item['status'] == 'paied' and shop['id'] not in delivered_shop_ids
+            )
+            order_item['all_shop_ids'] = sorted(all_shop_ids)
+            order_item['delivered_shop_ids'] = sorted(delivered_shop_ids)
             scoped_orders.append(order_item)
 
     return scoped_orders
@@ -318,6 +350,7 @@ def pay(id):
             return json_response(ResponseCode.ERROR, '订单状态更新失败，且回滚异常，请检查钱包流水')
         return json_response(resp['code'], resp['message'], **resp['data'])
 
+    clear_delivered_shop_ids(id)
     flash('支付成功', 'success')
     return json_response(resp['code'], resp['message'], **resp['data'])
 
@@ -355,6 +388,7 @@ def cancel(id):
         'status': 'cancelled',
     }, check_code=False)
     if resp['code'] == 0:
+        clear_delivered_shop_ids(id)
         flash('订单已取消，库存已恢复', 'success')
 
     return json_response(resp['code'], resp['message'], **resp['data'])
@@ -378,6 +412,7 @@ def receive(id):
         'status': 'received',
     }, check_code=False)
     if resp['code'] == 0:
+        clear_delivered_shop_ids(id)
         flash('确认收货成功', 'success')
 
     return json_response(resp['code'], resp['message'], **resp['data'])
@@ -418,6 +453,7 @@ def comment(id):
             flash('评价已写入，但订单状态更新失败，请检查订单状态', 'danger')
             return render_template('order/comment.html', form=form, order=order_data)
 
+        clear_delivered_shop_ids(id)
         flash('评价成功', 'success')
         return redirect(url_for('.index'))
 
@@ -472,24 +508,53 @@ def seller_detail(id):
 def seller_deliver(id):
     shop = get_current_user_shop()
     if shop is None:
-        return json_response(ResponseCode.NOT_FOUND)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return json_response(ResponseCode.NOT_FOUND)
+        flash('店铺不存在', 'danger')
+        return redirect(url_for('shop.create'))
 
     resp = TbBuy(current_app).get_json('/orders/{}'.format(id), check_code=False)
     order_data = resp.get('data', {}).get('order')
     if order_data is None:
-        return json_response(ResponseCode.NOT_FOUND)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return json_response(ResponseCode.NOT_FOUND)
+        flash('订单不存在', 'danger')
+        return redirect(url_for('.seller_index'))
 
     scoped_orders = seller_order_scope(full_order_info([order_data]), shop)
     if not scoped_orders:
-        return json_response(ResponseCode.NOT_FOUND)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return json_response(ResponseCode.NOT_FOUND)
+        flash('你无权操作该订单', 'danger')
+        return redirect(url_for('.seller_index'))
 
     order_data = scoped_orders[0]
     if not order_data.get('seller_can_deliver'):
-        return json_response(ResponseCode.ERROR, '当前订单状态不允许发货，或这是跨店铺订单')
+        resp = {
+            'code': ResponseCode.ERROR,
+            'message': '当前订单状态不允许发货，或你这部分已经发过了',
+            'data': {},
+        }
+        return seller_deliver_response(resp)
 
-    update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
-        'status': 'delivered',
-    }, check_code=False)
-    if update_resp['code'] == 0:
-        flash('发货成功', 'success')
-    return json_response(update_resp['code'], update_resp['message'], **update_resp['data'])
+    shop_id = shop['id']
+    redis.sadd(delivered_shops_key(id), shop_id)
+
+    delivered_shop_ids = get_delivered_shop_ids(id)
+    all_shop_ids = set(order_data.get('all_shop_ids', []))
+    if all_shop_ids and all_shop_ids.issubset(delivered_shop_ids):
+        update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
+            'status': 'delivered',
+        }, check_code=False)
+        if update_resp['code'] == 0:
+            flash('这张订单已全部发货', 'success')
+        else:
+            redis.srem(delivered_shops_key(id), shop_id)
+        return seller_deliver_response(update_resp)
+
+    flash('你店铺这部分已经发货，等其他店铺也发完后，订单会进入待收货', 'success')
+    return seller_deliver_response({
+        'code': 0,
+        'message': '当前店铺商品已发货',
+        'data': {},
+    })

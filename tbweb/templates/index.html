@@ -5,7 +5,7 @@
 {% block body %}
 <section class="hero-panel">
   <div class="hero-panel__eyebrow">精选推荐</div>
-  <h1 class="hero-panel__title">发现好物，连接店铺，完成一站式购物体验</h1>
+  <h1 class="hero-panel__title">今天想买什么，就先看看。</h1>
   <p class="hero-panel__text">
     今天先逛点顺眼的，喜欢了就直接带走。
   </p>
@@ -15,16 +15,16 @@
   </div>
   <div class="hero-metrics">
     <div class="hero-metric">
-      <div class="hero-metric__label">推荐商品</div>
-      <div class="hero-metric__value">{{ products|length }}</div>
+      <div class="hero-metric__label">当前商品数</div>
+      <div class="hero-metric__value">{{ product_total }}</div>
     </div>
     <div class="hero-metric">
-      <div class="hero-metric__label">推荐店铺</div>
-      <div class="hero-metric__value">{{ shops|length }}</div>
+      <div class="hero-metric__label">当前店铺数</div>
+      <div class="hero-metric__value">{{ shop_total }}</div>
     </div>
     <div class="hero-metric">
-      <div class="hero-metric__label">今日推荐</div>
-      <div class="hero-metric__value">在线可用</div>
+      <div class="hero-metric__label">订单总数</div>
+      <div class="hero-metric__value">{{ order_total }}</div>
     </div>
   </div>
 </section>

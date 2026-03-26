@@ -8,6 +8,7 @@ from ..forms import ProductForm
 from ..services import TbFile, TbMall
 
 product = Blueprint('product', __name__, url_prefix='/products')
+PRODUCTS_PER_PAGE = 24
 
 
 def has_uploaded_file(field):
@@ -33,7 +34,7 @@ def index():
 
     page = request.args.get('page', 1, type=int)
 
-    limit = current_app.config['PAGINATION_PER_PAGE']
+    limit = PRODUCTS_PER_PAGE
     offset = (page - 1) * limit
     resp = TbMall(current_app).get_json('/products', params={
             # 添加了下面一行代码
@@ -44,7 +45,7 @@ def index():
     })
 
      # 修改了下面这一行代码
-    return render_template('product/index.html', **resp['data'], keywords=keywords)
+    return render_template('product/index.html', **resp['data'], keywords=keywords, per_page=limit)
 
 
 

@@ -1,14 +1,39 @@
+import random
+
 from flask import Blueprint, current_app, render_template
 from tblib.redis import redis
 
-from ..services import TbMall
+from ..services import TbBuy, TbMall
 from .shop import full_shop_info
 
 common = Blueprint('common', __name__, url_prefix='/')
 
 
+def pick_random_ids(ids, limit=4):
+    if len(ids) <= limit:
+        return ids
+    return random.sample(ids, limit)
+
+
 @common.route('')
 def index():
+    product_total_resp = TbMall(current_app).get_json('/products', params={
+        'limit': 1,
+        'offset': 0,
+    }, check_code=False)
+    shop_total_resp = TbMall(current_app).get_json('/shops', params={
+        'limit': 1,
+        'offset': 0,
+    }, check_code=False)
+    order_total_resp = TbBuy(current_app).get_json('/orders', params={
+        'limit': 1,
+        'offset': 0,
+    }, check_code=False)
+
+    product_total = product_total_resp.get('data', {}).get('total', 0)
+    shop_total = shop_total_resp.get('data', {}).get('total', 0)
+    order_total = order_total_resp.get('data', {}).get('total', 0)
+
     # 推荐商品
     product_ids = []
     for raw_id in redis.lrange('recommend.products', 0, -1):
@@ -18,6 +43,7 @@ def index():
             continue
     if not product_ids:
         product_ids = [2, 3, 4]
+    product_ids = pick_random_ids(product_ids, limit=4)
 
     products = []
     if product_ids:
@@ -39,6 +65,7 @@ def index():
             continue
     if not shop_ids:
         shop_ids = [5, 6]
+    shop_ids = pick_random_ids(shop_ids, limit=4)
 
     shops = []
     if shop_ids:
@@ -53,4 +80,11 @@ def index():
 
         shops = full_shop_info(shops)
 
-    return render_template('index.html', products=products, shops=shops)
+    return render_template(
+        'index.html',
+        products=products,
+        shops=shops,
+        product_total=product_total,
+        shop_total=shop_total,
+        order_total=order_total,
+    )

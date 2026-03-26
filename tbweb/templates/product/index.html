@@ -46,5 +46,5 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
 </div>
 {% endif %}
 
-{{ pagination((total / config['PAGINATION_PER_PAGE'])|round(0, 'ceil')|int,
+{{ pagination((total / per_page)|round(0, 'ceil')|int,
 request.args.get('page', '1')|int, '.index') }} {% endblock %}

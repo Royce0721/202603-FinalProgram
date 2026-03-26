@@ -8,6 +8,7 @@ from ..forms import ShopForm
 from ..services import TbMall, TbUser, TbFile
 
 shop = Blueprint('shop', __name__, url_prefix='/shops')
+SHOPS_PER_PAGE = 6
 
 
 def get_current_user_shop():
@@ -28,7 +29,7 @@ def index():
 
     page = request.args.get('page', 1, type=int)
 
-    limit = current_app.config['PAGINATION_PER_PAGE']
+    limit = SHOPS_PER_PAGE
     offset = (page - 1) * limit
     resp = TbMall(current_app).get_json('/shops', params={
             # 添加了下面一行代码
@@ -58,7 +59,7 @@ def index():
         shop['products'] = r['data']['products']
 
     # 修改了下面这一行代码
-    return render_template('shop/index.html', shops=shops, total=total, keywords=keywords)
+    return render_template('shop/index.html', shops=shops, total=total, keywords=keywords, per_page=limit)
 
 
 

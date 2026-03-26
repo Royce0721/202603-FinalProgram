@@ -6,7 +6,7 @@
     <div class="section-head">
       <div>
         <div class="section-head__title">编辑店铺</div>
-        <p class="section-head__text">调整店铺 #{{ shop['id'] }} 的名称和介绍。</p>
+        <p class="section-head__text">店铺信息，在这里改。</p>
       </div>
       <div class="d-flex">
         <form method="POST" action="{{ url_for('admin.delete_shop', id=shop['id']) }}" onsubmit="return confirm('确认删除这个店铺？如果店铺下还有商品将无法删除。');">
@@ -28,7 +28,7 @@
             {% endif %}
             <p class="mb-2">店铺名称：{{ shop['name'] }}</p>
             <p class="mb-2">店铺介绍：{{ shop['description'] }}</p>
-            <p class="mb-0 text-muted">提示：只有空店铺才能删除，店铺下还有商品时会被系统拦截。</p>
+            <p class="mb-0 text-muted">店里还有商品的时候，暂时删不了。</p>
           </div>
         </div>
       </div>

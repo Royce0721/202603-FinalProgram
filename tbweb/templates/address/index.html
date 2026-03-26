@@ -8,7 +8,7 @@
 <div class="section-head">
   <div>
     <div class="section-head__title">地址列表</div>
-    <p class="section-head__text">常用地址放这边，改起来也方便。</p>
+    <p class="section-head__text">常用地址都放在这儿。</p>
   </div>
   <a class="btn btn-primary" href="{{ url_for('.create') }}">新增地址</a>
 </div>
@@ -42,7 +42,7 @@
 {% else %}
 <div class="empty-state">
   <div class="empty-state__title">你还没有收货地址</div>
-  <p class="empty-state__text">先加一个，之后下单会省事很多。</p>
+  <p class="empty-state__text">先加一个，下单时就能直接选了。</p>
 </div>
 {% endif %}
 {% endblock %}

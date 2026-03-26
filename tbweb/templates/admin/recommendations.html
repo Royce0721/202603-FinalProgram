@@ -3,8 +3,25 @@
 {% block admin_body %}
 <div class="page-hero">
   <h3 class="page-hero__title">首页推荐</h3>
-  <p class="page-hero__text">首页想推什么，就在这里定。</p>
+  <p class="page-hero__text">首页先露面的，就在这里挑。</p>
 </div>
+
+<style>
+  .recommendation-panel {
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .recommendation-panel::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .recommendation-panel::-webkit-scrollbar-thumb {
+    background: rgba(25, 118, 210, 0.22);
+    border-radius: 999px;
+  }
+</style>
 
 <form method="POST">
   {{ form.csrf_token }}
@@ -14,14 +31,27 @@
       <div class="section-head">
         <div>
           <div class="section-head__title">推荐商品</div>
-          <p class="section-head__text">勾上后，首页就会按这里的顺序展示。</p>
+          <p class="section-head__text">想先推哪几件，就勾哪几件。</p>
         </div>
+        <span class="badge-soft">已选 {{ selected_product_ids|length }} 件</span>
+      </div>
+      <div class="mb-3">
+        <input
+          class="form-control"
+          id="recommend-product-search"
+          type="text"
+          placeholder="搜商品名、店铺名或商品ID"
+        />
       </div>
 
       {% if products %}
+      <div class="recommendation-panel">
       <div class="row">
         {% for product in products %}
-        <div class="col-md-6 mb-3">
+        <div
+          class="col-md-6 mb-3 recommend-product-item"
+          data-search="{{ product['title'] }} {{ product['id'] }} {{ product['shop']['name'] if product['shop'] else '' }}"
+        >
           <label class="surface-card surface-card--soft h-100 w-100 mb-0" style="cursor: pointer;">
             <div class="surface-card__body d-flex align-items-start">
               <input
@@ -44,6 +74,7 @@
         </div>
         {% endfor %}
       </div>
+      </div>
       {% else %}
       <div class="text-muted">还没有可推荐的商品。</div>
       {% endif %}
@@ -55,14 +86,27 @@
       <div class="section-head">
         <div>
           <div class="section-head__title">推荐店铺</div>
-          <p class="section-head__text">选几家放到首页，逛起来会更完整。</p>
+          <p class="section-head__text">先让谁出现在首页，就选谁。</p>
         </div>
+        <span class="badge-soft">已选 {{ selected_shop_ids|length }} 家</span>
+      </div>
+      <div class="mb-3">
+        <input
+          class="form-control"
+          id="recommend-shop-search"
+          type="text"
+          placeholder="搜店铺名、店主名或店铺ID"
+        />
       </div>
 
       {% if shops %}
+      <div class="recommendation-panel">
       <div class="row">
         {% for shop in shops %}
-        <div class="col-md-6 mb-3">
+        <div
+          class="col-md-6 mb-3 recommend-shop-item"
+          data-search="{{ shop['name'] }} {{ shop['id'] }} {{ shop['owner']['username'] if shop['owner'] else '' }}"
+        >
           <label class="surface-card surface-card--soft h-100 w-100 mb-0" style="cursor: pointer;">
             <div class="surface-card__body d-flex align-items-start">
               <input
@@ -85,6 +129,7 @@
         </div>
         {% endfor %}
       </div>
+      </div>
       {% else %}
       <div class="text-muted">还没有可推荐的店铺。</div>
       {% endif %}
@@ -95,4 +140,23 @@
     {{ form.submit(class='btn btn-primary btn-lg') }}
   </div>
 </form>
+{% endblock %}
+{% block js %}
+{{ super() }}
+<script>
+  $(function () {
+    function bindRecommendFilter(inputSelector, itemSelector) {
+      $(inputSelector).on('input', function () {
+        var keyword = ($(this).val() || '').toLowerCase().trim();
+        $(itemSelector).each(function () {
+          var text = (($(this).data('search') || '') + '').toLowerCase();
+          $(this).toggle(!keyword || text.indexOf(keyword) !== -1);
+        });
+      });
+    }
+
+    bindRecommendFilter('#recommend-product-search', '.recommend-product-item');
+    bindRecommendFilter('#recommend-shop-search', '.recommend-shop-item');
+  });
+</script>
 {% endblock %}

@@ -1,7 +1,7 @@
 from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Optional, Length, Email, EqualTo, DataRequired, ValidationError, NumberRange
 
 from ..services import TbUser
@@ -34,7 +34,11 @@ class LoginForm(FlaskForm):
 # 个人资料表单
 class ProfileForm(FlaskForm):
     username = StringField('用户名', validators=[Length(2, 20)])
-    gender = StringField('性别', validators=[Length(1, 1)])
+    gender = SelectField(
+        '性别',
+        choices=[('', '未设置'), ('男', '男'), ('女', '女')],
+        validators=[Optional()],
+    )
     mobile = StringField('手机', validators=[Length(11, 11)])
     submit = SubmitField('提交')
 
@@ -56,4 +60,3 @@ class WalletForm(FlaskForm):
     money = IntegerField('充值数量（元）', validators=[
                          DataRequired(), NumberRange(1, 1000000)])
     submit = SubmitField('提交')
-

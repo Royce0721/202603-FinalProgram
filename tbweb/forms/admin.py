@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length, NumberRange, Optional
+from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional
 
 
 class AdminUserForm(FlaskForm):
@@ -11,7 +11,7 @@ class AdminUserForm(FlaskForm):
         validators=[Optional()],
     )
     mobile = StringField('手机号', validators=[Optional(), Length(0, 11)])
-    wallet_money = IntegerField('钱包余额', validators=[DataRequired(), NumberRange(0, 100000000)])
+    wallet_money = IntegerField('钱包余额', validators=[InputRequired(), NumberRange(0, 100000000)])
     submit = SubmitField('保存用户')
 
 

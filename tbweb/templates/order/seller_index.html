@@ -44,9 +44,12 @@ status_name %} {% extends "base.html" %} {% block title %}
     {% for order_product in order['seller_order_products'] %}
     <div class="col-md-6 mb-3">
       <div class="border rounded p-3 h-100">
-        <div><strong>{{ order_product['product']['title'] if order_product['product'] else '商品已失效' }}</strong></div>
+        <div><strong>{{ order_product['product_title'] or (order_product['product']['title'] if order_product['product'] else '商品已失效') }}</strong></div>
         <div class="text-muted">数量：{{ order_product['amount'] }}</div>
         <div class="text-muted">单价：¥{{ order_product['price']|money }}</div>
+        {% if order_product.get('product_deleted') %}
+        <div class="small text-muted mt-2">商品已删除</div>
+        {% endif %}
       </div>
     </div>
     {% endfor %}

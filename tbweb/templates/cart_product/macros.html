@@ -2,6 +2,11 @@
 
 {% from 'macros.html' import file_url %} {% macro cart_product(item, selectable=False, editable=False) -%}
 {% set product = item.get('product') %}
+{% set snapshot_title = item.get('product_title') or (product['title'] if product else '') %}
+{% set snapshot_cover = item.get('product_cover') or (product['cover'] if product else '') %}
+{% set snapshot_shop_name = item.get('shop_name') or ((product['shop']['name']) if product and product.get('shop') else '') %}
+{% set order_item = item.get('order_item') %}
+{% set product_unavailable = item.get('product_deleted') %}
 {% set fallback_subtotal = item.get('subtotal', item.get('price', 0) * item['amount']) %}
 <div class="cart-item">
   {% if selectable %}
@@ -17,10 +22,12 @@
   </div>
   {% endif %}
   <div class="cart-item__media">
-    {% if product %}
+    {% if product and not product_unavailable %}
     <a href="{{ url_for('product.detail', id=product['id']) }}">
       <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
     </a>
+    {% elif snapshot_cover %}
+    <img src="{{ file_url(snapshot_cover) }}" alt="{{ snapshot_title or '商品图片' }}" />
     {% else %}
     <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted small">
       商品已失效
@@ -29,11 +36,16 @@
   </div>
   <div class="cart-item__info">
     <div>
-      <p class="cart-item__title mb-2">{{ product['title'] if product else '商品已失效' }}</p>
-      {% if product %}
+      <p class="cart-item__title mb-2">{{ snapshot_title or '商品已失效' }}</p>
+      {% if product and not product_unavailable %}
       <a class="cart-item__shop" href="{{ url_for('shop.detail', id=product['shop']['id']) }}">
         店铺：{{ product['shop']['name'] }}
       </a>
+      {% elif snapshot_shop_name %}
+      <span class="cart-item__shop text-muted">店铺：{{ snapshot_shop_name }}</span>
+      {% if order_item and item.get('product_deleted') %}
+      <div class="small text-muted mt-1">商品已删除</div>
+      {% endif %}
       {% else %}
       <span class="cart-item__shop text-muted">这件商品目前已经无法查看</span>
       {% endif %}
@@ -41,7 +53,7 @@
   </div>
   <div class="cart-item__price-block">
     <div class="cart-item__label">单价</div>
-    <div class="cart-item__price">¥{{ (product['price'] if product else item.get('price', 0))|money }}</div>
+    <div class="cart-item__price">¥{{ ((item.get('price', 0)) if order_item else (product['price'] if product else item.get('price', 0)))|money }}</div>
   </div>
   <div>
     {% if editable and product %}

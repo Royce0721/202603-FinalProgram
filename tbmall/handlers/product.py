@@ -145,12 +145,6 @@ def delete_product(id):
     if product is None:
         return json_response(ResponseCode.NOT_FOUND)
 
-    refs_resp = TbBuy(current_app).get_json('/order_products/exists', params={
-        'product_ids': str(product.id),
-    }, check_code=False)
-    if refs_resp.get('data', {}).get('has_refs'):
-        return json_response(ResponseCode.ERROR, '商品已出现在历史订单中，不能直接删除')
-
     db.session.delete(product)
     db.session.commit()
 

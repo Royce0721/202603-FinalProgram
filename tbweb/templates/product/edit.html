@@ -30,7 +30,6 @@ block title %}
       {% else %}
       <div class="empty-state">
         <div class="empty-state__title">还没有商品图片</div>
-        <p class="empty-state__text">补一张图，商品会更完整。</p>
       </div>
       {% endif %}
       {% if product.get('extra_images') %}
@@ -64,7 +63,6 @@ block title %}
   <div class="col-lg-8 mb-4">
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">编辑“{{ product['title'] }}”</h5>
-      <p class="text-muted">主图可以单独更换，详情图会继续追加；右侧图片支持设为主图或直接删除。</p>
       <form method="POST" enctype="multipart/form-data" id="product-edit-form">
         {{ form.csrf_token }}
         <div class="form-group">{{ form.title.label }} {{ form.title(class='form-control') }}</div>

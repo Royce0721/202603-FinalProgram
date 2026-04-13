@@ -14,7 +14,7 @@ block title %}
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">店铺信息</h5>
       {% if shop['cover'] %}
-      <img class="img-fluid rounded mb-3" style="width: 100%; height: 220px; object-fit: cover;" src="{{ file_url(shop['cover']) }}" alt="{{ shop['name'] }}" />
+      <img class="img-fluid rounded mb-3" style="width: 100%; height: 220px; object-fit: contain; background: #f8fafc;" src="{{ file_url(shop['cover']) }}" alt="{{ shop['name'] }}" />
       {% endif %}
       <p class="mb-2"><strong>店铺名称：</strong>{{ shop['name'] }}</p>
       <p class="mb-2"><strong>店主：</strong>{{ shop['user']['username'] }}</p>

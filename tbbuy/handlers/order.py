@@ -49,6 +49,10 @@ def create_order():
             return json_response(ResponseCode.ERROR, '订单商品信息不完整')
         price = to_money(price)
         item['price'] = price
+        item['product_shop_id'] = int(item.get('product_shop_id') or 0)
+        item['product_title'] = (item.get('product_title') or '').strip()
+        item['product_cover'] = (item.get('product_cover') or '').strip()
+        item['shop_name'] = (item.get('shop_name') or '').strip()
         if amount <= 0 or price < Decimal('0.00'):
             return json_response(ResponseCode.ERROR, '订单商品数量或价格不合法')
         product_ids.append(product_id)

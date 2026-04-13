@@ -126,7 +126,18 @@ def full_order_info(orders):
     for order_item in orders:
         order_item['address'] = addresses.get(str(order_item['address_id']))
         for order_product in order_item['order_products']:
-            order_product['product'] = products.get(str(order_product['product_id']))
+            product = products.get(str(order_product['product_id']))
+            order_product['product'] = product
+            order_product['order_item'] = True
+            order_product['product_deleted'] = product is None
+            order_product['product_changed'] = (
+                product is not None and (
+                    str(product.get('price')) != str(order_product.get('price')) or
+                    (product.get('title') or '') != (order_product.get('product_title') or '') or
+                    (product.get('cover') or '') != (order_product.get('product_cover') or '') or
+                    ((product.get('shop') or {}).get('name') or '') != (order_product.get('shop_name') or '')
+                )
+            )
             order_product['subtotal'] = to_money(order_product.get('price', 0)) * order_product.get('amount', 0)
 
     return orders
@@ -150,8 +161,11 @@ def seller_order_scope(orders, shop):
         for order_product in order_item['order_products']:
             product = order_product.get('product')
             if product is None:
-                continue
-            product_shop_id = product['shop']['id']
+                product_shop_id = int(order_product.get('product_shop_id') or 0)
+                if product_shop_id <= 0:
+                    continue
+            else:
+                product_shop_id = product['shop']['id']
             all_shop_ids.add(product_shop_id)
             if product_shop_id == shop['id']:
                 seller_products.append(order_product)
@@ -259,8 +273,12 @@ def create():
             'order_products': [
                 {
                     'product_id': v['product_id'],
+                    'product_shop_id': v['product']['shop']['id'],
                     'amount': v['amount'],
                     'price': v['product']['price'],
+                    'product_title': v['product']['title'],
+                    'product_cover': v['product']['cover'],
+                    'shop_name': v['product']['shop']['name'],
                 } for v in cart_products
             ],
             'user_id': current_user.get_id(),
@@ -310,7 +328,19 @@ def detail(id):
         'ids': ','.join([str(v['product_id']) for v in order_data['order_products']]),
     })
     for order_product in order_data['order_products']:
-        order_product['product'] = resp['data']['products'].get(str(order_product['product_id']))
+        product = resp['data']['products'].get(str(order_product['product_id']))
+        order_product['product'] = product
+        order_product['order_item'] = True
+        order_product['product_deleted'] = product is None
+        order_product['product_changed'] = (
+            product is not None and (
+                str(product.get('price')) != str(order_product.get('price')) or
+                (product.get('title') or '') != (order_product.get('product_title') or '') or
+                (product.get('cover') or '') != (order_product.get('product_cover') or '') or
+                ((product.get('shop') or {}).get('name') or '') != (order_product.get('shop_name') or '')
+            )
+        )
+        order_product['subtotal'] = to_money(order_product.get('price', 0)) * order_product.get('amount', 0)
 
     if form.validate_on_submit():
         resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
@@ -485,6 +515,18 @@ def comment(id):
     for order_product in order_data['order_products']:
         order_product['reviewed'] = int(order_product['product_id']) in review_map
         order_product['review'] = review_map.get(int(order_product['product_id']))
+        order_product['order_item'] = True
+        order_product['product_deleted'] = order_product.get('product') is None
+        product = order_product.get('product')
+        order_product['product_changed'] = (
+            product is not None and (
+                str(product.get('price')) != str(order_product.get('price')) or
+                (product.get('title') or '') != (order_product.get('product_title') or '') or
+                (product.get('cover') or '') != (order_product.get('product_cover') or '') or
+                ((product.get('shop') or {}).get('name') or '') != (order_product.get('shop_name') or '')
+            )
+        )
+        order_product['subtotal'] = to_money(order_product.get('price', 0)) * order_product.get('amount', 0)
         if int(order_product['product_id']) == selected_product_id:
             selected_order_product = order_product
 

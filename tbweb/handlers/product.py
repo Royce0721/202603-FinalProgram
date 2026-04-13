@@ -7,6 +7,7 @@ from tblib.money import to_money
 
 from ..forms import ProductForm
 from ..services import TbBuy, TbFile, TbMall, TbUser
+from .sales import enrich_products_with_sales
 
 product = Blueprint('product', __name__, url_prefix='/products')
 PRODUCTS_PER_PAGE = 24
@@ -72,6 +73,7 @@ def index():
         'limit': limit,
         'offset': offset
     })
+    enrich_products_with_sales(resp.get('data', {}).get('products', []))
 
      # 修改了下面这一行代码
     return render_template('product/index.html', **resp['data'], keywords=keywords, per_page=limit)
@@ -86,6 +88,7 @@ def detail(id):
     # 向后台商场服务查询对应商品id的详情
     resp = TbMall(current_app).get_json('/products/{}'.format(id))
     product_data = resp['data']['product']
+    enrich_products_with_sales([product_data])
 
     reviews_resp = TbBuy(current_app).get_json('/reviews', params={
         'product_id': id,
@@ -134,6 +137,7 @@ def mine():
         'limit': limit,
         'offset': offset,
     })
+    enrich_products_with_sales(resp.get('data', {}).get('products', []))
     return render_template('product/mine.html', shop=shop, **resp['data'])
 
 

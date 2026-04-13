@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 
 from ..forms import ShopForm
 from ..services import TbMall, TbUser, TbFile
+from .sales import enrich_products_with_sales
 
 shop = Blueprint('shop', __name__, url_prefix='/shops')
 SHOPS_PER_PAGE = 6
@@ -57,6 +58,7 @@ def index():
             'limit': 3
         })
         shop['products'] = r['data']['products']
+        enrich_products_with_sales(shop['products'])
 
     # 修改了下面这一行代码
     return render_template('shop/index.html', shops=shops, total=total, keywords=keywords, per_page=limit)
@@ -87,6 +89,7 @@ def detail(id):
         'limit': limit,
         'offset': offset
     })
+    enrich_products_with_sales(resp.get('data', {}).get('products', []))
 
     return render_template('shop/detail.html', shop=shop, **resp['data'])
 
@@ -154,6 +157,7 @@ def mine():
         'offset': 0,
     })
     products = products_resp['data']['products']
+    enrich_products_with_sales(products)
 
     form = ShopForm(data={
         'name': shop_data['name'],
@@ -229,5 +233,6 @@ def full_shop_info(shops):
             'limit': 3
         })
         shop['products'] = r['data']['products']
+        enrich_products_with_sales(shop['products'])
 
     return shops

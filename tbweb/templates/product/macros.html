@@ -15,6 +15,7 @@
   </div>
   <div class="product-card__meta">
     <span class="product-card__price">¥{{ item['price']|money }}</span>
+    <span class="product-card__sales">销量 {{ item.get('sales', 0) }}</span>
   </div>
 </div>
 {%- endmacro %}

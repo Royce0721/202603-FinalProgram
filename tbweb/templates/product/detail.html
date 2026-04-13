@@ -54,6 +54,7 @@ title %}
       <div class="detail-price">¥{{ product['price']|money }}</div>
       <div class="detail-meta">
         <span class="detail-chip">库存 {{ product['amount'] }}</span>
+        <span class="detail-chip">销量 {{ product.get('sales', 0) }}</span>
         {% if product['category'] %}
         <span class="detail-chip">分类 {{ product['category'] }}</span>
         {% endif %}

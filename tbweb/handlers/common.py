@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, render_template
 from flask_login import current_user
 
 from ..services import TbBuy, TbMall
+from .sales import enrich_products_with_sales
 from .shop import full_shop_info
 
 common = Blueprint('common', __name__, url_prefix='/')
@@ -21,12 +22,16 @@ def fetch_products_by_ids(product_ids):
     return products
 
 
-def fetch_hot_product_ids(limit=4, user_id=None):
+def fetch_product_sales_rows(limit=20, user_id=None):
     params = {'limit': limit}
     if user_id is not None:
         params['user_id'] = user_id
     resp = TbBuy(current_app).get_json('/order_products/sales', params=params, check_code=False)
-    rows = resp.get('data', {}).get('product_sales', [])
+    return resp.get('data', {}).get('product_sales', [])
+
+
+def fetch_hot_product_ids(limit=4, user_id=None):
+    rows = fetch_product_sales_rows(limit=limit, user_id=user_id)
     product_ids = [row['product_id'] for row in rows if row.get('product_id')]
     if product_ids:
         return product_ids
@@ -38,45 +43,72 @@ def fetch_hot_product_ids(limit=4, user_id=None):
     return [product['id'] for product in resp.get('data', {}).get('products', [])]
 
 
-def guess_category_for_user(user_id):
-    history_ids = fetch_hot_product_ids(limit=50, user_id=user_id)
+def rank_categories_for_user(user_id):
+    sales_rows = fetch_product_sales_rows(limit=100, user_id=user_id)
+    history_ids = [row['product_id'] for row in sales_rows if row.get('product_id')]
     products = fetch_products_by_ids(history_ids)
+    product_sales = {
+        int(row['product_id']): int(row.get('sales') or 0)
+        for row in sales_rows
+        if row.get('product_id') is not None
+    }
     category_sales = {}
     for product in products:
         category = (product.get('category') or '').strip()
         if not category:
             continue
-        category_sales[category] = category_sales.get(category, 0) + 1
-    if not category_sales:
-        return ''
-    return sorted(category_sales.items(), key=lambda item: (-item[1], item[0]))[0][0]
+        product_id = int(product.get('id'))
+        category_sales[category] = category_sales.get(category, 0) + product_sales.get(product_id, 0)
+    return [name for name, _count in sorted(category_sales.items(), key=lambda item: (-item[1], item[0]))]
 
 
 def fetch_personalized_products(user_id, limit=4):
-    category = guess_category_for_user(user_id)
-    if not category:
-        return [], ''
-    resp = TbMall(current_app).get_json('/products', params={
-        'category': category,
-        'limit': 20,
-        'offset': 0,
-    }, check_code=False)
-    products = resp.get('data', {}).get('products', [])
+    categories = rank_categories_for_user(user_id)
+    if not categories:
+        return [], []
+
     hot_ids = set(fetch_hot_product_ids(limit=50))
-    products.sort(key=lambda item: (item['id'] not in hot_ids, -item['id']))
-    return products[:limit], category
+    selected = []
+    selected_ids = set()
+
+    for category in categories:
+        resp = TbMall(current_app).get_json('/products', params={
+            'category': category,
+            'limit': 20,
+            'offset': 0,
+        }, check_code=False)
+        products = resp.get('data', {}).get('products', [])
+        products.sort(key=lambda item: (item['id'] not in hot_ids, -item['id']))
+        for product in products:
+            product_id = int(product['id'])
+            if product_id in selected_ids:
+                continue
+            selected.append(product)
+            selected_ids.add(product_id)
+            if len(selected) >= limit:
+                return selected, categories
+
+    return selected, categories
 
 
 def fetch_hot_shops(limit=4):
-    product_ids = fetch_hot_product_ids(limit=100)
+    sales_rows = fetch_product_sales_rows(limit=100)
+    product_ids = [row['product_id'] for row in sales_rows if row.get('product_id')]
     products = fetch_products_by_ids(product_ids)
+    product_map = {int(product['id']): product for product in products}
     shop_sales = {}
-    for product in products:
+    for row in sales_rows:
+        product_id = row.get('product_id')
+        if product_id is None:
+            continue
+        product = product_map.get(int(product_id))
+        if product is None:
+            continue
         shop = product.get('shop') or {}
         shop_id = shop.get('id')
         if shop_id is None:
             continue
-        shop_sales[shop_id] = shop_sales.get(shop_id, 0) + 1
+        shop_sales[shop_id] = shop_sales.get(shop_id, 0) + int(row.get('sales') or 0)
 
     hot_shop_ids = [shop_id for shop_id, _ in sorted(shop_sales.items(), key=lambda item: (-item[1], item[0]))[:limit]]
     if not hot_shop_ids:
@@ -117,9 +149,10 @@ def index():
     products = fetch_products_by_ids(fetch_hot_product_ids(limit=4))
 
     if current_user.is_authenticated:
-        personalized_products, _category = fetch_personalized_products(int(current_user.get_id()), limit=4)
+        personalized_products, _categories = fetch_personalized_products(int(current_user.get_id()), limit=4)
         if personalized_products:
             products = personalized_products
+    enrich_products_with_sales(products)
 
     shops = fetch_hot_shops(limit=4)
 

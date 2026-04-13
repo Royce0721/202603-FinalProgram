@@ -131,6 +131,15 @@ def full_order_info(orders):
     return orders
 
 
+def fetch_order_reviews(order_id):
+    resp = TbBuy(current_app).get_json('/reviews', params={
+        'order_id': order_id,
+        'limit': 100,
+        'offset': 0,
+    }, check_code=False)
+    return resp.get('data', {}).get('reviews', [])
+
+
 def seller_order_scope(orders, shop):
     scoped_orders = []
     for order_item in orders:
@@ -456,35 +465,85 @@ def comment(id):
     if order_data is None or order_data['user_id'] != current_user_id:
         flash('订单不存在', 'danger')
         return redirect(url_for('.index'))
-    if order_data['status'] != 'received':
+    if order_data['status'] not in ('received', 'commented'):
         flash('当前订单状态不允许评价', 'danger')
         return redirect(url_for('.index'))
 
     order_data = full_order_info([order_data])[0]
+    reviews = fetch_order_reviews(id)
+    review_map = {int(review['product_id']): review for review in reviews if review.get('product_id') is not None}
+    order_product_ids = [int(item['product_id']) for item in order_data['order_products']]
+
+    selected_product_id = request.args.get('product_id', type=int)
+    if selected_product_id not in order_product_ids:
+        selected_product_id = next((pid for pid in order_product_ids if pid not in review_map), None)
+    if selected_product_id is None and order_product_ids:
+        selected_product_id = order_product_ids[0]
+
+    selected_order_product = None
+    for order_product in order_data['order_products']:
+        order_product['reviewed'] = int(order_product['product_id']) in review_map
+        order_product['review'] = review_map.get(int(order_product['product_id']))
+        if int(order_product['product_id']) == selected_product_id:
+            selected_order_product = order_product
+
+    if selected_order_product is None:
+        flash('订单里没有可评价的商品', 'danger')
+        return redirect(url_for('.index'))
+
     form = ReviewForm()
     if form.validate_on_submit():
         review_resp = TbBuy(current_app).post_json('/reviews', json={
             'order_id': id,
             'user_id': current_user_id,
+            'product_id': selected_product_id,
             'rating': int(form.rating.data),
             'content': form.content.data.strip(),
         }, check_code=False)
         if review_resp['code'] != 0:
             flash(review_resp['message'], 'danger')
-            return render_template('order/comment.html', form=form, order=order_data)
+            return render_template(
+                'order/comment.html',
+                form=form,
+                order=order_data,
+                selected_order_product=selected_order_product,
+                selected_product_id=selected_product_id,
+            )
 
-        update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
-            'status': 'commented',
-        }, check_code=False)
-        if update_resp['code'] != 0:
-            flash('评价已写入，但订单状态更新失败，请检查订单状态', 'danger')
-            return render_template('order/comment.html', form=form, order=order_data)
+        reviews = fetch_order_reviews(id)
+        reviewed_product_ids = {
+            int(review['product_id'])
+            for review in reviews
+            if review.get('product_id') is not None
+        }
 
-        clear_delivered_shop_ids(id)
-        flash('评价成功', 'success')
-        return redirect(url_for('.index'))
+        if set(order_product_ids).issubset(reviewed_product_ids):
+            update_resp = TbBuy(current_app).post_json('/orders/{}'.format(id), json={
+                'status': 'commented',
+            }, check_code=False)
+            if update_resp['code'] != 0:
+                flash('评价已写入，但订单状态更新失败，请检查订单状态', 'danger')
+                return render_template(
+                    'order/comment.html',
+                    form=form,
+                    order=order_data,
+                    selected_order_product=selected_order_product,
+                    selected_product_id=selected_product_id,
+                )
+            flash('这张订单已经全部评价完成', 'success')
+            return redirect(url_for('.index'))
 
-    return render_template('order/comment.html', form=form, order=order_data)
+        flash('这件商品评价成功，继续把剩下的也评完吧', 'success')
+        next_product_id = next((pid for pid in order_product_ids if pid not in reviewed_product_ids), None)
+        return redirect(url_for('.comment', id=id, product_id=next_product_id or selected_product_id))
+
+    return render_template(
+        'order/comment.html',
+        form=form,
+        order=order_data,
+        selected_order_product=selected_order_product,
+        selected_product_id=selected_product_id,
+    )
 
 
 @order.route('/seller')

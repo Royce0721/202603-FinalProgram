@@ -11,19 +11,28 @@ review = Blueprint('review', __name__, url_prefix='/reviews')
 @review.route('', methods=['POST'])
 def create_review():
     data = request.get_json() or {}
-    if not data.get('order_id') or not data.get('user_id') or not (data.get('content') or '').strip():
+    if (
+        not data.get('order_id')
+        or not data.get('user_id')
+        or not data.get('product_id')
+        or not (data.get('content') or '').strip()
+    ):
         return json_response(ResponseCode.ERROR, '评价信息不完整')
     rating = int(data.get('rating') or 5)
     if rating < 1 or rating > 5:
         return json_response(ResponseCode.ERROR, '评分范围不合法')
 
-    existing_review = Review.query.filter(Review.order_id == data['order_id']).first()
+    existing_review = Review.query.filter(
+        Review.order_id == data['order_id'],
+        Review.product_id == data['product_id'],
+    ).first()
     if existing_review is not None:
-        return json_response(ResponseCode.ERROR, '该订单已经评价过了')
+        return json_response(ResponseCode.ERROR, '这件商品已经评价过了')
 
     review_data = ReviewSchema().load({
         'order_id': data['order_id'],
         'user_id': data['user_id'],
+        'product_id': data['product_id'],
         'content': data['content'].strip(),
     })
     session.add(review_data)
@@ -50,9 +59,7 @@ def review_list():
     if user_id is not None:
         query = query.filter(Review.user_id == user_id)
     if product_id is not None:
-        query = query.join(OrderProduct, Review.order_id == OrderProduct.order_id).filter(
-            OrderProduct.product_id == product_id
-        ).distinct(Review.id)
+        query = query.filter(Review.product_id == product_id)
 
     total = query.count()
     reviews = query.order_by(Review.id.desc()).limit(limit).offset(offset)

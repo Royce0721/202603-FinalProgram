@@ -10,10 +10,12 @@ class Review(Base):
     __table_args__ = (
         Index('idx_order_id', 'order_id'),
         Index('idx_user_id', 'user_id'),
+        Index('idx_product_id', 'product_id'),
     )
 
     order_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
+    product_id = Column(Integer, nullable=False, default=0)
     content = Column(String(200), nullable=False, default='')
     extra = relationship(
         'ReviewExtra',
@@ -27,6 +29,7 @@ class ReviewSchema(Schema):
     id = fields.Int()
     order_id = fields.Int()
     user_id = fields.Int()
+    product_id = fields.Int()
     content = fields.Str()
     rating = fields.Method('get_rating')
     created_at = fields.DateTime()

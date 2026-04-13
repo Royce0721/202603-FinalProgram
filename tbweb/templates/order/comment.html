@@ -11,7 +11,6 @@
 
 <div class="page-hero">
   <div class="page-hero__title">评价订单 #{{ order['id'] }}</div>
-  <p class="page-hero__text">说两句这次买得怎么样。</p>
 </div>
 
 <div class="checkout-layout">
@@ -19,14 +18,14 @@
     <div class="checkout-panel__body">
       <div class="section-head">
         <div>
-          <div class="section-head__title">已购商品</div>
-          <p class="section-head__text">先看看你这次买了什么。</p>
+          <div class="section-head__title">订单商品</div>
+          <p class="section-head__text">一件一件来评价就行。</p>
         </div>
       </div>
       <div class="summary-stack">
         {% for order_product in order['order_products'] %}
         {% set product = order_product.get('product') %}
-        <div class="checkout-item">
+        <div class="checkout-item {% if selected_product_id == order_product['product_id'] %}border-primary{% endif %}">
           <div class="checkout-item__media">
             {% if product %}
             <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
@@ -42,29 +41,57 @@
               {% endif %}
               <span>数量：{{ order_product['amount'] }}</span>
             </div>
+            <div class="mt-2">
+              {% if order_product['reviewed'] %}
+              <span class="badge-soft mr-2">已评价</span>
+              <span class="text-muted small">{{ order_product['review']['rating'] }} 分</span>
+              {% else %}
+              <span class="badge badge-light">未评价</span>
+              {% endif %}
+            </div>
           </div>
           <div class="checkout-item__price">
             <div class="checkout-item__label">单价</div>
             <div>¥{{ order_product['price']|money }}</div>
           </div>
           <div class="checkout-item__subtotal">
-            <div class="checkout-item__label">小计</div>
-            <div>¥{{ (order_product['price'] * order_product['amount'])|money }}</div>
+            <div class="checkout-item__label">操作</div>
+            {% if order_product['reviewed'] %}
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('.comment', id=order['id'], product_id=order_product['product_id']) }}">查看</a>
+            {% else %}
+            <a class="btn btn-primary btn-sm" href="{{ url_for('.comment', id=order['id'], product_id=order_product['product_id']) }}">去评价</a>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
       </div>
     </div>
   </div>
+
   <div class="checkout-panel">
     <div class="checkout-panel__body">
+      {% set product = selected_order_product.get('product') %}
       <div class="section-head">
         <div>
-          <div class="section-head__title">填写评价</div>
-          <p class="section-head__text">给个分，再写几句感受。</p>
+          <div class="section-head__title">
+            {% if selected_order_product['reviewed'] %}评价详情{% else %}填写评价{% endif %}
+          </div>
+          <p class="section-head__text">
+            {{ product['title'] if product else '当前商品' }}
+          </p>
         </div>
       </div>
-      {{ form_macro(form) }}
+
+      {% if selected_order_product['reviewed'] %}
+      <div class="surface-card surface-card--soft">
+        <div class="surface-card__body">
+          <div class="mb-2"><strong>评分：</strong>{{ selected_order_product['review']['rating'] }} 分</div>
+          <div class="text-secondary">{{ selected_order_product['review']['content'] }}</div>
+        </div>
+      </div>
+      {% else %}
+      {{ form_macro(form, url=url_for('.comment', id=order['id'], product_id=selected_product_id)) }}
+      {% endif %}
     </div>
   </div>
 </div>

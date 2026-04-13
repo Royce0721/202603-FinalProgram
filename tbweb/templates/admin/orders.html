@@ -59,7 +59,7 @@
           <td>#{{ order['user_id'] }}</td>
           <td>{{ order['user']['username'] if order['user'] else '-' }}</td>
           <td>#{{ order['address_id'] }}</td>
-          <td>¥{{ order['pay_amount'] }}</td>
+          <td>¥{{ order['pay_amount']|money }}</td>
           <td>{{ order['status'] }}</td>
           <td>{{ order['created_at'] }}</td>
           <td><a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_order', id=order['id']) }}">编辑</a></td>

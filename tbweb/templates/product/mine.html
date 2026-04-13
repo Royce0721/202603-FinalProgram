@@ -26,7 +26,7 @@ block title %}
       <img class="img-fluid rounded mb-3" style="width: 100%; height: 200px; object-fit: cover;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
       <h5>{{ product['title'] }}</h5>
       <p class="text-muted" style="min-height: 3rem;">{{ product['description'] or '暂无商品描述' }}</p>
-      <p class="mb-2">价格：<span class="text-danger">¥{{ product['price'] }}</span></p>
+      <p class="mb-2">价格：<span class="text-danger">¥{{ product['price']|money }}</span></p>
       <p class="mb-3">库存：<span class="text-success">{{ product['amount'] }}</span></p>
       <div class="d-flex align-items-center">
         <a class="btn btn-outline-primary btn-sm" href="{{ url_for('product.edit', id=product['id']) }}">编辑</a>

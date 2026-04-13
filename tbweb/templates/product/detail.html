@@ -19,10 +19,30 @@ title %}
   <div class="row align-items-center">
   <div class="col-lg-5 mb-4 mb-lg-0">
     <div class="detail-media">
-      <a href="{{ url_for('product.detail', id=product['id']) }}">
-        <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
-      </a>
+      <img
+        id="product-main-image"
+        src="{{ file_url(gallery[0] if gallery else product['cover']) }}"
+        alt="{{ product['title'] }}"
+      />
     </div>
+    {% if gallery|length > 1 %}
+    <div class="detail-gallery">
+      {% for image_id in gallery %}
+      <button
+        class="detail-gallery__button {{ 'is-active' if loop.first else '' }}"
+        type="button"
+        data-gallery-button
+        data-image-url="{{ file_url(image_id) }}"
+      >
+        <img
+          class="detail-gallery__image"
+          src="{{ file_url(image_id) }}"
+          alt="{{ product['title'] }}"
+        />
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
   <div class="col-lg-7 d-flex flex-column justify-content-around">
     <div>
@@ -31,9 +51,16 @@ title %}
       <p class="text-secondary mb-0">{{ product['description'] or '暂无描述' }}</p>
     </div>
     <div>
-      <div class="detail-price">¥{{ product['price'] }}</div>
+      <div class="detail-price">¥{{ product['price']|money }}</div>
       <div class="detail-meta">
         <span class="detail-chip">库存 {{ product['amount'] }}</span>
+        {% if product['category'] %}
+        <span class="detail-chip">分类 {{ product['category'] }}</span>
+        {% endif %}
+        {% if product['sku_text'] %}
+        <span class="detail-chip">规格 {{ product['sku_text'] }}</span>
+        {% endif %}
+        <span class="detail-chip">评分 {{ average_rating if review_count else '暂无' }}</span>
         <a class="detail-chip" href="{{ url_for('shop.detail', id=product['shop']['id']) }}">店铺：{{ product['shop']['name'] }}</a>
       </div>
       {% if current_user.is_authenticated and product['shop']['user_id'] == current_user.id %}
@@ -49,4 +76,60 @@ title %}
   </div>
   </div>
 </div>
+
+<section class="content-section">
+  <div class="content-section__header">
+    <div>
+      <h2 class="content-section__title">商品评价</h2>
+      <p class="content-section__text">
+        {% if review_count %}
+        一共 {{ review_count }} 条，平均 {{ average_rating }} 分。
+        {% else %}
+        暂时还没有评价。
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if reviews %}
+  <div class="dashboard-stack">
+    {% for review in reviews %}
+    <div class="surface-card">
+      <div class="surface-card__body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong>{{ review['user']['username'] if review['user'] else ('用户#' ~ review['user_id']) }}</strong>
+          <span class="badge-soft">{{ review['rating'] }} 分</span>
+        </div>
+        <div class="text-secondary mb-2">{{ review['content'] }}</div>
+        <div class="text-muted small">{{ review['created_at'][:19] }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state__title">还没有评价</div>
+    <p class="empty-state__text">第一条评价，等着买家来写。</p>
+  </div>
+  {% endif %}
+</section>
+{% if gallery|length > 1 %}
+<script>
+  (function () {
+    const mainImage = document.getElementById('product-main-image');
+    const buttons = Array.from(document.querySelectorAll('[data-gallery-button]'));
+    if (!mainImage || buttons.length === 0) return;
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', function () {
+        const nextUrl = this.getAttribute('data-image-url');
+        if (!nextUrl) return;
+        mainImage.src = nextUrl;
+        buttons.forEach((item) => item.classList.remove('is-active'));
+        this.classList.add('is-active');
+      });
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

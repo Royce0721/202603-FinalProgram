@@ -45,7 +45,7 @@
           <td><a href="{{ url_for('product.detail', id=product['id']) }}">{{ product['title'] }}</a></td>
           <td>#{{ product['shop_id'] }}</td>
           <td>{{ product['shop']['name'] if product['shop'] else '-' }}</td>
-          <td>¥{{ product['price'] }}</td>
+          <td>¥{{ product['price']|money }}</td>
           <td>{{ product['amount'] }}</td>
           <td>
             <a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.edit_product', id=product['id']) }}">编辑</a>

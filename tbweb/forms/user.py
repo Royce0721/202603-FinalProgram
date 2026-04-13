@@ -1,7 +1,7 @@
 from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DecimalField
 from wtforms.validators import DataRequired, Optional, Length, Email, EqualTo, DataRequired, ValidationError, NumberRange
 
 from ..services import TbUser
@@ -57,6 +57,6 @@ class PasswordForm(FlaskForm):
 
 # 钱包表单
 class WalletForm(FlaskForm):
-    money = IntegerField('充值数量（元）', validators=[
-                         DataRequired(), NumberRange(1, 1000000)])
+    money = DecimalField('充值数量（元）', places=2, validators=[
+                         DataRequired(), NumberRange(0.01, 1000000)])
     submit = SubmitField('提交')

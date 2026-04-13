@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Numeric
 from sqlalchemy.orm import relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import Schema, fields, post_load
@@ -20,7 +20,7 @@ class User(Base):
     avatar = Column(String(200), nullable=False, default='')
     gender = Column(String(1), nullable=False, default=Gender.UNKNOWN)
     mobile = Column(String(11), unique=True)
-    wallet_money = Column(Integer, nullable=False, default=0)
+    wallet_money = Column(Numeric(10, 2), nullable=False, default=0)
 
     # 获取密码
     @property
@@ -45,7 +45,7 @@ class UserSchema(Schema):
     avatar = fields.Str()
     gender = fields.Str()
     mobile = fields.Str()
-    wallet_money = fields.Int()
+    wallet_money = fields.Decimal(as_string=True, places=2)
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 

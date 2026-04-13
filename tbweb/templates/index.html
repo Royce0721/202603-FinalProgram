@@ -32,8 +32,7 @@
 <section class="content-section">
   <div class="content-section__header">
     <div>
-      <h2 class="content-section__title">推荐商品</h2>
-      <p class="content-section__text">先看几件今天挺出彩的。</p>
+      <h2 class="content-section__title">{{ recommendation_title }}</h2>
     </div>
     <a class="btn btn-outline-secondary" href="{{ url_for('product.index') }}">查看全部商品</a>
   </div>
@@ -47,8 +46,7 @@
 <section class="content-section">
   <div class="content-section__header">
     <div>
-      <h2 class="content-section__title">推荐店铺</h2>
-      <p class="content-section__text">也许下一家你会想多逛一会儿。</p>
+      <h2 class="content-section__title">热门店铺</h2>
     </div>
     <a class="btn btn-outline-secondary" href="{{ url_for('shop.index') }}">查看全部店铺</a>
   </div>

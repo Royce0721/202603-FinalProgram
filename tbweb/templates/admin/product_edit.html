@@ -26,8 +26,19 @@
             {% if product['cover'] %}
             <img class="img-fluid rounded mb-3" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
             {% endif %}
+            {% if gallery and gallery|length > 1 %}
+            <div class="row mb-3">
+              {% for image_id in gallery %}
+              <div class="col-6 mb-2">
+                <img class="img-fluid rounded border" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
             <p class="mb-2">商品名称：{{ product['title'] }}</p>
-            <p class="mb-2">价格：¥{{ product['price'] }}</p>
+            <p class="mb-2">商品分类：{{ product['category'] or '-' }}</p>
+            <p class="mb-2">规格说明：{{ product['sku_text'] or '-' }}</p>
+            <p class="mb-2">价格：¥{{ product['price']|money }}</p>
             <p class="mb-0">库存：{{ product['amount'] }}</p>
           </div>
         </div>

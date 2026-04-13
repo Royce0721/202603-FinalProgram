@@ -17,23 +17,26 @@
 </div>
 
 {% if cart_products %}
-<div class="d-flex justify-content-end mb-3">
-  <a class="btn btn-primary btn-lg" href="{{ url_for('order.create') }}">去结算</a>
+<div class="cart-summary-bar">
+  <div>
+    <div class="page-hero__title" style="font-size: 1.2rem;">已选商品</div>
+    <div class="cart-summary-bar__hint">勾上想买的，数量也可以直接在这里改。</div>
+  </div>
+  <div class="text-right">
+    <div class="text-muted small mb-1">合计</div>
+    <div class="cart-summary-bar__value mb-2" id="selected-total">¥{{ total_amount|money }}</div>
+    <button class="btn btn-primary btn-lg" type="button" id="checkout-selected">去结算</button>
+  </div>
 </div>
 {% for cart_product in cart_products %}
 <div class="list-card mb-3">
-  <div class="list-card__body d-flex justify-content-between align-items-center flex-wrap">
-    <div class="mr-3 mb-3 mb-lg-0 flex-grow-1">
-      {{ cart_product_macro(cart_product) }}
+  <div class="list-card__body cart-row">
+    <div>
+      {{ cart_product_macro(cart_product, selectable=True, editable=True) }}
     </div>
-    <div class="d-flex flex-column justify-content-center">
+    <div class="cart-item__actions">
       <a
-        class="btn btn-outline-secondary m-2"
-        href="{{ url_for('.detail', id=cart_product.id) }}"
-        >修改</a
-      >
-      <a
-        class="btn btn-outline-danger m-2 delete-cart-product"
+        class="btn btn-outline-danger delete-cart-product"
         href="#"
         data-url="{{ url_for('.delete', id=cart_product.id) }}"
         >删除</a
@@ -50,11 +53,50 @@
 {% endif %} {% endblock %} {% block js %} {{ super() }}
 <script>
   $(document).ready(function () {
+    function updateSelectedTotal() {
+      let total = 0;
+      $('.cart-select:checked').each(function () {
+        total += Number($(this).data('subtotal') || 0);
+      });
+      $('#selected-total').text('¥' + total.toFixed(2));
+    }
+
+    $('.cart-select').on('change', function () {
+      updateSelectedTotal();
+    });
+
+    $('.cart-amount-btn').click(function () {
+      const nextAmount = Number($(this).data('next-amount'));
+      const maxAmount = Number($(this).data('max-amount'));
+      const cartId = $(this).data('cart-id');
+      if (nextAmount < 1) {
+        alert('数量不能再少了');
+        return;
+      }
+      if (maxAmount > 0 && nextAmount > maxAmount) {
+        alert('库存不够了');
+        return;
+      }
+      $.ajax({
+        url: '/cart_products/' + cartId + '/amount',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ amount: nextAmount }),
+        success: function (result) {
+          if (result['code'] == 0) {
+            location.reload();
+          } else {
+            alert(result['message']);
+          }
+        },
+      });
+    });
+
     $('.delete-cart-product').click(function () {
       if (confirm('确认删除？')) {
         $.ajax({
           url: $(this).data('url'),
-          type: 'DELETE',
+          type: 'POST',
           success: function (result) {
             if (result['code'] == 0) {
               location.reload();
@@ -65,6 +107,21 @@
         });
       }
     });
+
+    $('#checkout-selected').click(function () {
+      const ids = $('.cart-select:checked')
+        .map(function () {
+          return $(this).val();
+        })
+        .get();
+      if (ids.length === 0) {
+        alert('先选几件再结算');
+        return;
+      }
+      location.href = "{{ url_for('order.create') }}" + '?selected_ids=' + ids.join(',');
+    });
+
+    updateSelectedTotal();
   });
 </script>
 {% endblock %}

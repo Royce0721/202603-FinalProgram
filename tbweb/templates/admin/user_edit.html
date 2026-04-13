@@ -21,7 +21,7 @@
             <p class="mb-2">用户名：{{ user['username'] }}</p>
             <p class="mb-2">手机号：{{ user['mobile'] or '-' }}</p>
             <p class="mb-2">性别：{{ user['gender'] or '未设置' }}</p>
-            <p class="mb-0">钱包余额：¥{{ user['wallet_money'] }}</p>
+            <p class="mb-0">钱包余额：¥{{ user['wallet_money']|money }}</p>
           </div>
         </div>
       </div>

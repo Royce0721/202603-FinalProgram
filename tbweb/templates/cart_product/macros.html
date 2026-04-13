@@ -1,20 +1,76 @@
 <!-- templates/cart_product/macros.html -->
 
-{% from 'macros.html' import file_url %} {% macro cart_product(item) -%}
-<div class="line-item">
-  <div class="line-item__media">
-    <a href="{{ url_for('product.detail', id=item['product']['id']) }}">
-      <img src="{{ file_url(item['product']['cover']) }}" alt="{{ item['product']['title'] }}" />
-    </a>
+{% from 'macros.html' import file_url %} {% macro cart_product(item, selectable=False, editable=False) -%}
+{% set product = item.get('product') %}
+{% set fallback_subtotal = item.get('subtotal', item.get('price', 0) * item['amount']) %}
+<div class="cart-item">
+  {% if selectable %}
+  <div class="cart-item__check">
+    <input
+      class="cart-select"
+      type="checkbox"
+      value="{{ item['id'] }}"
+      data-subtotal="{{ fallback_subtotal }}"
+      {% if not product %}disabled{% endif %}
+      {% if product %}checked{% endif %}
+    />
   </div>
-  <div class="line-item__body d-flex flex-column justify-content-around">
-    <div>
-      <p class="line-item__title">{{ item['product']['title'] }}</p>
-      <p class="line-item__price">¥{{ item['product']['price'] }}</p>
+  {% endif %}
+  <div class="cart-item__media">
+    {% if product %}
+    <a href="{{ url_for('product.detail', id=product['id']) }}">
+      <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+    </a>
+    {% else %}
+    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted small">
+      商品已失效
     </div>
-    <p class="line-item__meta">
-      数量：<span class="line-item__amount">{{ item['amount'] }}</span>
-    </p>
+    {% endif %}
+  </div>
+  <div class="cart-item__info">
+    <div>
+      <p class="cart-item__title mb-2">{{ product['title'] if product else '商品已失效' }}</p>
+      {% if product %}
+      <a class="cart-item__shop" href="{{ url_for('shop.detail', id=product['shop']['id']) }}">
+        店铺：{{ product['shop']['name'] }}
+      </a>
+      {% else %}
+      <span class="cart-item__shop text-muted">这件商品目前已经无法查看</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="cart-item__price-block">
+    <div class="cart-item__label">单价</div>
+    <div class="cart-item__price">¥{{ (product['price'] if product else item.get('price', 0))|money }}</div>
+  </div>
+  <div>
+    {% if editable and product %}
+    <div class="cart-item__label text-center">数量</div>
+    <div class="cart-item__qty">
+      <button
+        class="btn btn-sm btn-outline-secondary cart-amount-btn"
+        type="button"
+        data-cart-id="{{ item['id'] }}"
+        data-next-amount="{{ item['amount'] - 1 }}"
+        data-max-amount="{{ product['amount'] }}"
+      >-</button>
+      <span class="cart-item__qty-value">{{ item['amount'] }}</span>
+      <button
+        class="btn btn-sm btn-outline-secondary cart-amount-btn"
+        type="button"
+        data-cart-id="{{ item['id'] }}"
+        data-next-amount="{{ item['amount'] + 1 }}"
+        data-max-amount="{{ product['amount'] }}"
+      >+</button>
+    </div>
+    {% else %}
+    <div class="cart-item__label text-center">数量</div>
+    <div class="cart-item__qty"><span class="cart-item__qty-value">{{ item['amount'] }}</span></div>
+    {% endif %}
+  </div>
+  <div class="cart-item__subtotal-block">
+    <div class="cart-item__label">小计</div>
+    <div class="cart-item__subtotal">¥{{ fallback_subtotal|money }}</div>
   </div>
 </div>
 {%- endmacro %}

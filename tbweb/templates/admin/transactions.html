@@ -47,7 +47,7 @@
           <td>{{ transaction['payer']['username'] if transaction['payer'] else '-' }}</td>
           <td>#{{ transaction['payee_id'] }}</td>
           <td>{{ transaction['payee']['username'] if transaction['payee'] else '-' }}</td>
-          <td>¥{{ transaction['amount'] }}</td>
+          <td>¥{{ transaction['amount']|money }}</td>
           <td>{{ transaction['note'] }}</td>
           <td>{{ transaction['created_at'] }}</td>
         </tr>

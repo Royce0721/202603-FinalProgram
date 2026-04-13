@@ -31,7 +31,7 @@ status_name %} {% extends "base.html" %} {% block title %}
     <div class="order-meta mb-4">
       <div class="order-meta__item"><span class="order-meta__label">联系电话</span>{{ order.address.phone }}</div>
       <div class="order-meta__item"><span class="order-meta__label">邮编</span>{{ order.address.zip_code }}</div>
-      <div class="order-meta__item"><span class="order-meta__label">订单金额</span><span class="text-primary font-weight-bold">￥{{ order.pay_amount }}</span></div>
+      <div class="order-meta__item"><span class="order-meta__label">订单金额</span><span class="text-primary font-weight-bold">￥{{ order.pay_amount|money }}</span></div>
     </div>
     <div class="dashboard-stack">
       {% for order_product in order['order_products'] %}

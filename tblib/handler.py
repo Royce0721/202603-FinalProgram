@@ -3,6 +3,7 @@ import traceback
 
 # 导入 jsonify 模块，可以将其它类型数据转换为 json 格式
 from flask import jsonify
+from .money import normalize_money_data
 
 class ResponseCode:
     OK = 0
@@ -23,11 +24,11 @@ class ResponseCode:
 
 
 def json_response(code=ResponseCode.OK, message='', **kwargs):
-    return jsonify({
+    return jsonify(normalize_money_data({
         'code': code,
         'message': message or ResponseCode.MESSAGES.get(code, ''),
         'data': kwargs
-    })
+    }))
 
 
 def handle_error_json(exception):

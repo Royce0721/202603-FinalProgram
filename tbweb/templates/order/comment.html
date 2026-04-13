@@ -1,6 +1,4 @@
-{% from 'macros.html' import form as form_macro %} {% from
-'cart_product/macros.html' import cart_product as cart_product_macro %} {%
-extends "base.html" %} {% block title %}
+{% from 'macros.html' import form as form_macro, file_url %} {% extends "base.html" %} {% block title %}
 <title>{{ config['SITE_NAME'] }} - 评价订单</title>
 {% endblock %} {% block body %}
 <nav aria-label="breadcrumb">
@@ -27,9 +25,31 @@ extends "base.html" %} {% block title %}
       </div>
       <div class="summary-stack">
         {% for order_product in order['order_products'] %}
-        <div class="list-card">
-          <div class="list-card__body">
-            {{ cart_product_macro(order_product) }}
+        {% set product = order_product.get('product') %}
+        <div class="checkout-item">
+          <div class="checkout-item__media">
+            {% if product %}
+            <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+            {% else %}
+            <div class="checkout-item__placeholder">商品已失效</div>
+            {% endif %}
+          </div>
+          <div class="checkout-item__body">
+            <div class="checkout-item__title">{{ product['title'] if product else '商品已失效' }}</div>
+            <div class="checkout-item__meta">
+              {% if product %}
+              <span>店铺：{{ product['shop']['name'] }}</span>
+              {% endif %}
+              <span>数量：{{ order_product['amount'] }}</span>
+            </div>
+          </div>
+          <div class="checkout-item__price">
+            <div class="checkout-item__label">单价</div>
+            <div>¥{{ order_product['price']|money }}</div>
+          </div>
+          <div class="checkout-item__subtotal">
+            <div class="checkout-item__label">小计</div>
+            <div>¥{{ (order_product['price'] * order_product['amount'])|money }}</div>
           </div>
         </div>
         {% endfor %}
@@ -41,7 +61,7 @@ extends "base.html" %} {% block title %}
       <div class="section-head">
         <div>
           <div class="section-head__title">填写评价</div>
-          <p class="section-head__text">简单写几句就好。</p>
+          <p class="section-head__text">给个分，再写几句感受。</p>
         </div>
       </div>
       {{ form_macro(form) }}

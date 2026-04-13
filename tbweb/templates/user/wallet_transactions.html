@@ -35,7 +35,7 @@
         {% for wallet_transaction in wallet_transactions %}
         <tr>
           <th scope="row">{{ wallet_transaction['id'] }}</th>
-          <td>￥{{ wallet_transaction['amount'] }}</td>
+          <td>￥{{ wallet_transaction['amount']|money }}</td>
           <td>{{ wallet_transaction['payee']['username'] }}</td>
           <td>{{ wallet_transaction['payer']['username'] }}</td>
           <td>{{ wallet_transaction['note'] }}</td>

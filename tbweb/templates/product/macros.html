@@ -8,11 +8,13 @@
     </div>
     <p class="product-card__title">{{ item['title'] }}</p>
   </a>
-  <div class="product-card__meta">
-    <span class="text-monospace text-info">¥{{ item['price'] }}</span>
-    <a class="product-card__shop product-card__shop-link" href="{{ url_for('shop.detail', id=item['shop']['id']) }}">
-      {{ item['shop']['name'] }}
+  <div class="product-card__shop-row">
+    <a class="product-card__shop-label" href="{{ url_for('shop.detail', id=item['shop']['id']) }}">
+      店铺：{{ item['shop']['name'] }}
     </a>
+  </div>
+  <div class="product-card__meta">
+    <span class="product-card__price">¥{{ item['price']|money }}</span>
   </div>
 </div>
 {%- endmacro %}

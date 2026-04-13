@@ -16,11 +16,20 @@ block title %}
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">当前图片</h5>
       {% if product['cover'] %}
-      <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: cover;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+      <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: contain; background: #f8fafc;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
       {% else %}
       <div class="empty-state">
         <div class="empty-state__title">还没有商品图片</div>
         <p class="empty-state__text">补一张图，商品会更完整。</p>
+      </div>
+      {% endif %}
+      {% if gallery and gallery|length > 1 %}
+      <div class="row mt-3">
+        {% for image_id in gallery %}
+        <div class="col-6 mb-3">
+          <img class="img-fluid rounded border" style="width: 100%; height: 110px; object-fit: contain; background: #f8fafc;" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+        </div>
+        {% endfor %}
       </div>
       {% endif %}
     </div>
@@ -29,6 +38,7 @@ block title %}
   <div class="col-lg-8 mb-4">
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">编辑“{{ product['title'] }}”</h5>
+      <p class="text-muted">主图不换可以留空，详情图重新上传后会覆盖旧图集，图片尽量接近方图会更顺眼。</p>
       {{ form_macro(form, enctype='multipart/form-data') }}
     </div>
   </div>

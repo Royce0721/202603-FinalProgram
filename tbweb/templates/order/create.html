@@ -1,8 +1,6 @@
 <!-- templates/order/create.html -->
 
-{% from 'macros.html' import form as form_macro %} {% from
-'cart_product/macros.html' import cart_product as cart_product_macro %} {%
-extends "base.html" %} {% block title %}
+{% from 'macros.html' import form as form_macro, file_url %} {% extends "base.html" %} {% block title %}
 <title>{{ config['SITE_NAME'] }} - 创建订单</title>
 {% endblock %} {% block body %}
 <nav aria-label="breadcrumb">
@@ -15,7 +13,6 @@ extends "base.html" %} {% block title %}
 
 <div class="page-hero">
   <div class="page-hero__title">确认订单</div>
-  <p class="page-hero__text">最后确认一遍，没问题就下单。</p>
 </div>
 
 <div class="checkout-layout">
@@ -29,9 +26,31 @@ extends "base.html" %} {% block title %}
       </div>
       <div class="summary-stack">
         {% for cart_product in cart_products %}
-        <div class="list-card">
-          <div class="list-card__body">
-            {{ cart_product_macro(cart_product) }}
+        {% set product = cart_product.get('product') %}
+        <div class="checkout-item">
+          <div class="checkout-item__media">
+            {% if product %}
+            <img src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+            {% else %}
+            <div class="checkout-item__placeholder">商品已失效</div>
+            {% endif %}
+          </div>
+          <div class="checkout-item__body">
+            <div class="checkout-item__title">{{ product['title'] if product else '商品已失效' }}</div>
+            <div class="checkout-item__meta">
+              {% if product %}
+              <span>店铺：{{ product['shop']['name'] }}</span>
+              {% endif %}
+              <span>数量：{{ cart_product['amount'] }}</span>
+            </div>
+          </div>
+          <div class="checkout-item__price">
+            <div class="checkout-item__label">单价</div>
+            <div>¥{{ (product['price'] if product else 0)|money }}</div>
+          </div>
+          <div class="checkout-item__subtotal">
+            <div class="checkout-item__label">小计</div>
+            <div>¥{{ cart_product.get('subtotal', 0)|money }}</div>
           </div>
         </div>
         {% endfor %}
@@ -46,7 +65,13 @@ extends "base.html" %} {% block title %}
           <p class="section-head__text">把地址和备注填好就行。</p>
         </div>
       </div>
-      {{ form_macro(form) }}
+      <div class="surface-card surface-card--soft mb-3">
+        <div class="surface-card__body d-flex justify-content-between align-items-center">
+          <span class="text-muted">订单金额</span>
+          <strong class="text-danger" style="font-size: 1.35rem;">¥{{ total_amount|money }}</strong>
+        </div>
+      </div>
+      {{ form_macro(form, url=url_for('order.create', selected_ids=selected_ids_csv)) }}
     </div>
   </div>
 </div>

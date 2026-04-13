@@ -1,6 +1,7 @@
 from flask import Blueprint, request, current_app, render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
+from tblib.money import to_money
 
 from ..forms import RegisterForm, LoginForm, ProfileForm, AvatarForm, PasswordForm, WalletForm
 from ..services import TbUser, TbFile
@@ -175,7 +176,7 @@ def wallet():
         # 使用 post 方法向后台用户服务接口 /users/<int:id> 发送数据充值钱包金额，修改后的钱包金额是当前钱包金额加上充值金额
         resp = TbUser(current_app).post_json(
             '/users/{}'.format(current_user.get_id()), json={
-                'wallet_money': current_user.wallet_money + form.money.data,
+                'wallet_money': to_money(current_user.wallet_money) + form.money.data,
             }, check_code=False)
         if resp['code'] != 0:
             flash(resp['message'], 'danger')
@@ -199,4 +200,3 @@ def wallet_transactions():
     total = resp['data']['total']
 
     return render_template('user/wallet_transactions.html', wallet_transactions=wallet_transactions, total=total)
-

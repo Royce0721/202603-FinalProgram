@@ -2,6 +2,7 @@ from flask import Blueprint, request, current_app, render_template, redirect, ur
 from flask_login import login_required, current_user
 
 from tblib.handler import json_response, ResponseCode
+from tblib.money import to_money
 from tblib.redis import redis
 
 from ..forms import OrderForm, ReviewForm
@@ -37,7 +38,18 @@ def seller_deliver_response(resp):
 
 
 def _render_create_page(form, cart_products):
-    return render_template('order/create.html', form=form, cart_products=cart_products)
+    total_amount = sum([
+        to_money((item.get('product') or {}).get('price', 0)) * item.get('amount', 0)
+        for item in cart_products
+    ], to_money(0))
+    selected_ids_csv = ','.join([str(item['id']) for item in cart_products])
+    return render_template(
+        'order/create.html',
+        form=form,
+        cart_products=cart_products,
+        total_amount=total_amount,
+        selected_ids_csv=selected_ids_csv,
+    )
 
 
 def rollback_payment_transactions(order_id, successful_transfers):
@@ -190,6 +202,17 @@ def create():
         'user_id': current_user.get_id(),
     })
     cart_products = resp['data']['cart_products']
+    selected_ids = []
+    for raw_id in request.values.get('selected_ids', '').split(','):
+        raw_id = raw_id.strip()
+        if not raw_id:
+            continue
+        try:
+            selected_ids.append(int(raw_id))
+        except ValueError:
+            continue
+    if selected_ids:
+        cart_products = [item for item in cart_products if item['id'] in selected_ids]
     if len(cart_products) == 0:
         flash('购物车为空', 'danger')
         return redirect(url_for('cart_product.index'))
@@ -199,6 +222,10 @@ def create():
     })
     for item in cart_products:
         item['product'] = resp['data']['products'].get(str(item['product_id']))
+        if item.get('product') is not None:
+            item['subtotal'] = to_money(item['product']['price']) * item['amount']
+        else:
+            item['subtotal'] = to_money(0)
 
     if form.validate_on_submit():
         if len(addresses) == 0:
@@ -243,16 +270,15 @@ def create():
                 flash(resp['message'], 'danger')
                 return _render_create_page(form, cart_products)
 
-        resp = TbBuy(current_app).delete_json('/cart_products', params={
-            'user_id': current_user.get_id(),
-        })
-        if resp['code'] != 0:
-            flash(resp['message'], 'danger')
-            return _render_create_page(form, cart_products)
+        for item in cart_products:
+            resp = TbBuy(current_app).delete_json('/cart_products/{}'.format(item['id']), check_code=False)
+            if resp['code'] != 0:
+                flash(resp['message'], 'danger')
+                return _render_create_page(form, cart_products)
 
         return redirect(url_for('.index'))
 
-    return render_template('order/create.html', form=form, cart_products=cart_products)
+    return _render_create_page(form, cart_products)
 
 
 @order.route('/<int:id>', methods=['GET', 'POST'])
@@ -306,7 +332,7 @@ def pay(id):
 
     resp = TbUser(current_app).get_json('/users/{}'.format(order_data['user_id']))
     user = resp['data']['user']
-    if user['wallet_money'] < order_data['pay_amount']:
+    if to_money(user['wallet_money']) < to_money(order_data['pay_amount']):
         return json_response(ResponseCode.NO_ENOUGH_MONEY)
 
     resp = TbMall(current_app).get_json('/products/infos', params={
@@ -324,7 +350,7 @@ def pay(id):
         if product['amount'] < order_product['amount']:
             return json_response(ResponseCode.QUANTITY_EXCEEDS_LIMIT, '商品库存不足')
         resp = TbUser(current_app).post_json('/wallet_transactions', json={
-            'amount': order_product['amount'] * order_product['price'],
+            'amount': to_money(order_product['price']) * order_product['amount'],
             'note': '支付订单({})商品({})'.format(order_data['id'], product['id']),
             'payer_id': order_data['user_id'],
             'payee_id': product['shop']['user_id'],
@@ -335,7 +361,7 @@ def pay(id):
                 return json_response(ResponseCode.ERROR, '支付失败，且回滚异常，请检查钱包流水')
             return json_response(resp['code'], resp['message'], **resp['data'])
         successful_transfers.append({
-            'amount': order_product['amount'] * order_product['price'],
+            'amount': to_money(order_product['price']) * order_product['amount'],
             'payer_id': order_data['user_id'],
             'payee_id': product['shop']['user_id'],
             'product_id': product['id'],
@@ -440,6 +466,7 @@ def comment(id):
         review_resp = TbBuy(current_app).post_json('/reviews', json={
             'order_id': id,
             'user_id': current_user_id,
+            'rating': int(form.rating.data),
             'content': form.content.data.strip(),
         }, check_code=False)
         if review_resp['code'] != 0:

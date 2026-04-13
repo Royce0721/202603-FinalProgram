@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Numeric
 from sqlalchemy.orm import relationship, backref
 from marshmallow import Schema, fields, post_load
 
@@ -9,7 +9,7 @@ from .user import UserSchema
 class WalletTransaction(Base):
     __tablename__ = 'wallet_transaction'
     # 金额
-    amount = Column(Integer, nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
     # 备注
     note = Column(String(200), nullable=False, default='')
     # 付款人id
@@ -25,7 +25,7 @@ class WalletTransaction(Base):
 
 class WalletTransactionSchema(Schema):
     id = fields.Int()
-    amount = fields.Int()
+    amount = fields.Decimal(as_string=True, places=2)
     note = fields.Str()
     payer_id = fields.Int()
     payee_id = fields.Int()

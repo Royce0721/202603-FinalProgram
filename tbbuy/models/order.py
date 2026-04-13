@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Index
+from sqlalchemy import Column, Integer, String, Index, Numeric
 from sqlalchemy.orm import relationship
 from marshmallow import Schema, fields, post_load
 
@@ -24,7 +24,7 @@ class Order(Base):
     )
 
     # 金额
-    pay_amount = Column(Integer, nullable=False)
+    pay_amount = Column(Numeric(10, 2), nullable=False)
     # 备注
     note = Column(String(200), nullable=False, default='')
     # 收货地址
@@ -36,7 +36,7 @@ class Order(Base):
 
 class OrderSchema(Schema):
     id = fields.Int()
-    pay_amount = fields.Int()
+    pay_amount = fields.Decimal(as_string=True, places=2)
     note = fields.Str()
     address_id = fields.Int()
     user_id = fields.Int()

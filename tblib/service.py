@@ -1,4 +1,5 @@
 import requests
+from .money import normalize_money_data
 
 # 定义服务异常类
 class ServiceResponseNotOk(Exception):
@@ -50,6 +51,8 @@ class Service(requests.Session):
             data = {k: v for k, v in data.items() if v is not None}
         if isinstance(json, dict) and filter_none_field:
             json = {k: v for k, v in json.items() if v is not None}
+        data = normalize_money_data(data)
+        json = normalize_money_data(json)
 
         resp = self.post(path, data, json, **kwargs)
 

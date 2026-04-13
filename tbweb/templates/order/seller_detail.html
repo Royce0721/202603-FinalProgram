@@ -47,7 +47,7 @@
   <div class="border rounded p-3 mb-3">
     <div><strong>商品：</strong>{{ order_product['product']['title'] if order_product['product'] else '商品已失效' }}</div>
     <div><strong>数量：</strong>{{ order_product['amount'] }}</div>
-    <div><strong>单价：</strong>¥{{ order_product['price'] }}</div>
+    <div><strong>单价：</strong>¥{{ order_product['price']|money }}</div>
     <div><strong>商品ID：</strong>#{{ order_product['product_id'] }}</div>
   </div>
   {% endfor %}

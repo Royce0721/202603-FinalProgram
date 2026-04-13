@@ -5,10 +5,26 @@ from werkzeug.exceptions import BadRequest
 from tblib.model import db
 from tblib.handler import json_response, ResponseCode
 
-from ..models import Product, ProductSchema, Shop, ShopSchema
+from ..models import Product, ProductExtra, ProductSchema, Shop, ShopSchema
 from ..services import TbBuy
 
 product = Blueprint('product', __name__, url_prefix='/products')
+
+
+def normalize_gallery(value):
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [item for item in value.split(',') if item]
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return []
+
+
+def ensure_product_extra(product):
+    if product.extra is None:
+        product.extra = ProductExtra(product_id=product.id)
+    return product.extra
 
 
 @product.route('', methods=['POST'])
@@ -20,8 +36,22 @@ def create_product():
     if shop is None:
         return json_response(ResponseCode.NOT_FOUND, '店铺不存在')
 
-    product = ProductSchema().load(data)
+    product_data = {
+        'title': data.get('title'),
+        'description': data.get('description'),
+        'cover': data.get('cover') or '',
+        'price': data.get('price'),
+        'amount': data.get('amount'),
+        'shop_id': data.get('shop_id'),
+    }
+    product = ProductSchema().load(product_data)
     db.session.add(product)
+    db.session.commit()
+
+    extra = ensure_product_extra(product)
+    extra.gallery = ','.join(normalize_gallery(data.get('extra_images')))
+    extra.sku_text = (data.get('sku_text') or '').strip()
+    extra.category = (data.get('category') or '').strip()
     db.session.commit()
 
     return json_response(product=ProductSchema().dump(product))
@@ -33,6 +63,7 @@ def product_list():
     """
     shop_id = request.args.get('shop_id', type=int)
     keywords = request.args.get('keywords', '')
+    category = request.args.get('category', '').strip()
 
     order_direction = request.args.get('order_direction', 'desc')
     limit = request.args.get(
@@ -55,6 +86,9 @@ def product_list():
             )
         )
 
+    if category != '':
+        query = query.join(ProductExtra, Product.extra).filter(ProductExtra.category == category)
+
     total = query.count()
     products = query.order_by(order_by).limit(limit).offset(offset).all()
 
@@ -76,6 +110,16 @@ def update_product(id):
         if k not in allowed_fields:
             continue
         setattr(product, k, v)
+
+    if 'extra_images' in data or 'sku_text' in data:
+        extra = ensure_product_extra(product)
+        if 'extra_images' in data:
+            extra.gallery = ','.join(normalize_gallery(data.get('extra_images')))
+        if 'sku_text' in data:
+            extra.sku_text = (data.get('sku_text') or '').strip()
+    if 'category' in data:
+        extra = ensure_product_extra(product)
+        extra.category = (data.get('category') or '').strip()
 
     db.session.commit()
 

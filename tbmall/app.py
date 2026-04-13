@@ -12,6 +12,8 @@ def init_model(app):
     model.init(app)
     # 等价于 from . import models
     import_module('.models', __package__)
+    with app.app_context():
+        model.db.create_all()
 
 
 def init_handler(app):
@@ -42,4 +44,3 @@ if __name__ == '__main__':
     server = pywsgi.WSGIServer(app.config['LISTENER'], app)
     print('gevent WSGIServer listen on {} ...'.format(app.config['LISTENER']))
     server.serve_forever()
-

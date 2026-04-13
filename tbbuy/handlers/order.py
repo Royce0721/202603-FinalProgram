@@ -1,8 +1,10 @@
 from flask import Blueprint, request, current_app
 from sqlalchemy import or_
+from decimal import Decimal
 
 from tblib.model import session
 from tblib.handler import json_response, ResponseCode
+from tblib.money import to_money
 
 from ..models import Order, OrderSchema, OrderProduct, OrderProductSchema
 from ..models.order import OrderStatus
@@ -45,7 +47,9 @@ def create_order():
         price = item.get('price')
         if product_id is None or amount is None or price is None:
             return json_response(ResponseCode.ERROR, '订单商品信息不完整')
-        if amount <= 0 or price < 0:
+        price = to_money(price)
+        item['price'] = price
+        if amount <= 0 or price < Decimal('0.00'):
             return json_response(ResponseCode.ERROR, '订单商品数量或价格不合法')
         product_ids.append(product_id)
     if len(product_ids) != len(set(product_ids)):
@@ -55,8 +59,10 @@ def create_order():
     # 如果没有金额就计算并添加总金额数据
     if data.get('pay_amount') is None:
         # 循环遍历订单商品，取出每个商品的价格和数量进行相乘并求和
-        data['pay_amount'] = sum([x['price'] * x['amount']
-                                  for x in data['order_products']])
+        data['pay_amount'] = sum(
+            [x['price'] * x['amount'] for x in data['order_products']],
+            Decimal('0.00')
+        )
 
     order = OrderSchema().load(data)
     session.add(order)
@@ -129,7 +135,7 @@ def update_order(id):
         if current_status != OrderStatus.NEW:
             return json_response(ResponseCode.ERROR, '当前订单状态不允许修改订单商品')
         order_products = []
-        total_pay_amount = 0
+        total_pay_amount = Decimal('0.00')
         # 循环遍历商品订单
         for op in data.get('order_products'):
             # 根据 id 获取商品订单
@@ -142,7 +148,7 @@ def update_order(id):
                 order_product.amount = op.get('amount')
             # 更新商品的价格
             if op.get('price') is not None:
-                order_product.price = op.get('price')
+                order_product.price = to_money(op.get('price'))
             total_pay_amount += order_product.amount * order_product.price
             order_products.append(order_product)
         order.order_products = order_products

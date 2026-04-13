@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms import DecimalField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional
 
 
@@ -11,7 +11,7 @@ class AdminUserForm(FlaskForm):
         validators=[Optional()],
     )
     mobile = StringField('手机号', validators=[Optional(), Length(0, 11)])
-    wallet_money = IntegerField('钱包余额', validators=[InputRequired(), NumberRange(0, 100000000)])
+    wallet_money = DecimalField('钱包余额', places=2, validators=[InputRequired(), NumberRange(0, 100000000)])
     submit = SubmitField('保存用户')
 
 
@@ -31,7 +31,3 @@ class AdminOrderForm(FlaskForm):
     )
     note = TextAreaField('订单备注', validators=[Optional(), Length(0, 200)])
     submit = SubmitField('保存订单')
-
-
-class RecommendationForm(FlaskForm):
-    submit = SubmitField('保存推荐位')

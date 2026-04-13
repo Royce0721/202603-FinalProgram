@@ -4,6 +4,7 @@ from . import config
 
 import threading
 from tblib.etcd import init_etcd_client
+from tblib.money import format_money
 
 def init_handler(app):
     from .handlers import init
@@ -20,6 +21,7 @@ app = Flask(__name__)
 import os
 env = os.getenv("FLASK_ENV", "development")
 app.config.from_object(config.configs.get(env, config.DevelopmentConfig))
+app.jinja_env.filters['money'] = format_money
 
 init_handler(app)
 init_redis(app)

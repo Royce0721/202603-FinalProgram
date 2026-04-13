@@ -1,7 +1,5 @@
-import random
-
 from flask import Blueprint, current_app, render_template
-from tblib.redis import redis
+from flask_login import current_user
 
 from ..services import TbBuy, TbMall
 from .shop import full_shop_info
@@ -9,10 +7,91 @@ from .shop import full_shop_info
 common = Blueprint('common', __name__, url_prefix='/')
 
 
-def pick_random_ids(ids, limit=4):
-    if len(ids) <= limit:
-        return ids
-    return random.sample(ids, limit)
+def fetch_products_by_ids(product_ids):
+    if not product_ids:
+        return []
+    resp = TbMall(current_app).get_json('/products/infos', params={
+        'ids': ','.join([str(v) for v in product_ids]),
+    }, check_code=False)
+    products = []
+    for product_id in product_ids:
+        product = resp.get('data', {}).get('products', {}).get(str(product_id))
+        if product is not None:
+            products.append(product)
+    return products
+
+
+def fetch_hot_product_ids(limit=4, user_id=None):
+    params = {'limit': limit}
+    if user_id is not None:
+        params['user_id'] = user_id
+    resp = TbBuy(current_app).get_json('/order_products/sales', params=params, check_code=False)
+    rows = resp.get('data', {}).get('product_sales', [])
+    product_ids = [row['product_id'] for row in rows if row.get('product_id')]
+    if product_ids:
+        return product_ids
+
+    resp = TbMall(current_app).get_json('/products', params={
+        'limit': limit,
+        'offset': 0,
+    }, check_code=False)
+    return [product['id'] for product in resp.get('data', {}).get('products', [])]
+
+
+def guess_category_for_user(user_id):
+    history_ids = fetch_hot_product_ids(limit=50, user_id=user_id)
+    products = fetch_products_by_ids(history_ids)
+    category_sales = {}
+    for product in products:
+        category = (product.get('category') or '').strip()
+        if not category:
+            continue
+        category_sales[category] = category_sales.get(category, 0) + 1
+    if not category_sales:
+        return ''
+    return sorted(category_sales.items(), key=lambda item: (-item[1], item[0]))[0][0]
+
+
+def fetch_personalized_products(user_id, limit=4):
+    category = guess_category_for_user(user_id)
+    if not category:
+        return [], ''
+    resp = TbMall(current_app).get_json('/products', params={
+        'category': category,
+        'limit': 20,
+        'offset': 0,
+    }, check_code=False)
+    products = resp.get('data', {}).get('products', [])
+    hot_ids = set(fetch_hot_product_ids(limit=50))
+    products.sort(key=lambda item: (item['id'] not in hot_ids, -item['id']))
+    return products[:limit], category
+
+
+def fetch_hot_shops(limit=4):
+    product_ids = fetch_hot_product_ids(limit=100)
+    products = fetch_products_by_ids(product_ids)
+    shop_sales = {}
+    for product in products:
+        shop = product.get('shop') or {}
+        shop_id = shop.get('id')
+        if shop_id is None:
+            continue
+        shop_sales[shop_id] = shop_sales.get(shop_id, 0) + 1
+
+    hot_shop_ids = [shop_id for shop_id, _ in sorted(shop_sales.items(), key=lambda item: (-item[1], item[0]))[:limit]]
+    if not hot_shop_ids:
+        resp = TbMall(current_app).get_json('/shops', params={'limit': limit, 'offset': 0}, check_code=False)
+        return full_shop_info(resp.get('data', {}).get('shops', []))
+
+    resp = TbMall(current_app).get_json('/shops/infos', params={
+        'ids': ','.join([str(v) for v in hot_shop_ids]),
+    }, check_code=False)
+    shops = []
+    for shop_id in hot_shop_ids:
+        shop = resp.get('data', {}).get('shops', {}).get(str(shop_id))
+        if shop is not None:
+            shops.append(shop)
+    return full_shop_info(shops)
 
 
 @common.route('')
@@ -34,51 +113,15 @@ def index():
     shop_total = shop_total_resp.get('data', {}).get('total', 0)
     order_total = order_total_resp.get('data', {}).get('total', 0)
 
-    # 推荐商品
-    product_ids = []
-    for raw_id in redis.lrange('recommend.products', 0, -1):
-        try:
-            product_ids.append(int(raw_id))
-        except (TypeError, ValueError):
-            continue
-    if not product_ids:
-        product_ids = [2, 3, 4]
-    product_ids = pick_random_ids(product_ids, limit=4)
+    recommendation_title = '猜你喜欢'
+    products = fetch_products_by_ids(fetch_hot_product_ids(limit=4))
 
-    products = []
-    if product_ids:
-        resp = TbMall(current_app).get_json('/products/infos', params={
-            'ids': ','.join([str(v) for v in product_ids]),
-        })
+    if current_user.is_authenticated:
+        personalized_products, _category = fetch_personalized_products(int(current_user.get_id()), limit=4)
+        if personalized_products:
+            products = personalized_products
 
-        for product_id in product_ids:
-            product = resp['data']['products'].get(str(product_id))
-            if product is not None:
-                products.append(product)
-
-    # 推荐店铺
-    shop_ids = []
-    for raw_id in redis.lrange('recommend.shops', 0, -1):
-        try:
-            shop_ids.append(int(raw_id))
-        except (TypeError, ValueError):
-            continue
-    if not shop_ids:
-        shop_ids = [5, 6]
-    shop_ids = pick_random_ids(shop_ids, limit=4)
-
-    shops = []
-    if shop_ids:
-        resp = TbMall(current_app).get_json('/shops/infos', params={
-            'ids': ','.join([str(v) for v in shop_ids]),
-        })
-
-        for shop_id in shop_ids:
-            shop = resp['data']['shops'].get(str(shop_id))
-            if shop is not None:
-                shops.append(shop)
-
-        shops = full_shop_info(shops)
+    shops = fetch_hot_shops(limit=4)
 
     return render_template(
         'index.html',
@@ -87,4 +130,5 @@ def index():
         product_total=product_total,
         shop_total=shop_total,
         order_total=order_total,
+        recommendation_title=recommendation_title,
     )

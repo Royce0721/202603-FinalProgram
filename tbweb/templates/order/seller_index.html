@@ -35,7 +35,7 @@ status_name %} {% extends "base.html" %} {% block title %}
   </div>
 
   <div class="order-meta mb-3">
-    <div class="order-meta__item"><span class="order-meta__label">订单金额</span>¥{{ order['pay_amount'] }}</div>
+    <div class="order-meta__item"><span class="order-meta__label">订单金额</span>¥{{ order['pay_amount']|money }}</div>
     <div class="order-meta__item"><span class="order-meta__label">收货地址</span>{{ order['address']['address'] if order['address'] else '-' }}</div>
     <div class="order-meta__item"><span class="order-meta__label">联系电话</span>{{ order['address']['phone'] if order['address'] else '-' }}</div>
   </div>
@@ -46,7 +46,7 @@ status_name %} {% extends "base.html" %} {% block title %}
       <div class="border rounded p-3 h-100">
         <div><strong>{{ order_product['product']['title'] if order_product['product'] else '商品已失效' }}</strong></div>
         <div class="text-muted">数量：{{ order_product['amount'] }}</div>
-        <div class="text-muted">单价：¥{{ order_product['price'] }}</div>
+        <div class="text-muted">单价：¥{{ order_product['price']|money }}</div>
       </div>
     </div>
     {% endfor %}

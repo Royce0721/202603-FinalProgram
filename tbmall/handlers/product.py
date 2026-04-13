@@ -86,7 +86,11 @@ def product_list():
             )
         )
 
-    if category != '':
+    if category == '__uncategorized__':
+        query = query.outerjoin(ProductExtra, Product.extra).filter(
+            or_(ProductExtra.id.is_(None), ProductExtra.category == '')
+        )
+    elif category != '':
         query = query.join(ProductExtra, Product.extra).filter(ProductExtra.category == category)
 
     total = query.count()

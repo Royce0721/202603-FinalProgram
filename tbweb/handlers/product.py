@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from tblib.money import to_money
 
 from ..forms import ProductForm
+from ..forms.product import PRODUCT_CATEGORY_CHOICES
 from ..services import TbBuy, TbFile, TbMall, TbUser
 from .sales import enrich_products_with_sales
 
@@ -109,24 +110,33 @@ def get_current_user_shop():
 def index():
     """商品列表
     """
-      # 添加了下面一行代码
     keywords = request.args.get('keywords', '')
+    category = request.args.get('category', '').strip()
 
     page = request.args.get('page', 1, type=int)
 
     limit = PRODUCTS_PER_PAGE
     offset = (page - 1) * limit
     resp = TbMall(current_app).get_json('/products', params={
-            # 添加了下面一行代码
         'keywords': keywords,
-
+        'category': category,
         'limit': limit,
         'offset': offset
     })
     enrich_products_with_sales(resp.get('data', {}).get('products', []))
 
-     # 修改了下面这一行代码
-    return render_template('product/index.html', **resp['data'], keywords=keywords, per_page=limit)
+    category_options = [('', '全部分类')] + [
+        choice for choice in PRODUCT_CATEGORY_CHOICES if choice[0] != ''
+    ] + [('__uncategorized__', '未分类')]
+
+    return render_template(
+        'product/index.html',
+        **resp['data'],
+        keywords=keywords,
+        category=category,
+        category_options=category_options,
+        per_page=limit,
+    )
 
 
 

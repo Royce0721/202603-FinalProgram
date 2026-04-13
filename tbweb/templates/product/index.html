@@ -17,11 +17,19 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
 
 <div class="search-panel mb-4">
   <form class="form-row align-items-end">
-    <div class="col-md-8 mb-2 mb-md-0">
+    <div class="col-md-6 mb-2 mb-md-0">
       <label class="sr-only" for="keywords">关键词</label>
       <input type="text" value="{{ keywords }}" class="form-control" id="keywords" name="keywords" placeholder="搜索商品名称或描述">
     </div>
-    <div class="col-md-4 d-flex">
+    <div class="col-md-3 mb-2 mb-md-0">
+      <label class="sr-only" for="category">分类</label>
+      <select class="form-control" id="category" name="category">
+        {% for value, label in category_options %}
+        <option value="{{ value }}" {% if category == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex">
       <button type="submit" class="btn btn-primary mr-2">搜索</button>
       <a class="btn btn-outline-secondary" href="{{ url_for('.index') }}">清空</a>
     </div>
@@ -46,4 +54,4 @@ product as product_macro %} {% extends "base.html" %} {% block title %}
 {% endif %}
 
 {{ pagination((total / per_page)|round(0, 'ceil')|int,
-request.args.get('page', '1')|int, '.index') }} {% endblock %}
+request.args.get('page', '1')|int, '.index', keywords=keywords, category=category) }} {% endblock %}

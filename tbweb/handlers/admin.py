@@ -44,6 +44,56 @@ def product_gallery(product):
     return gallery
 
 
+def unique_image_ids(image_ids):
+    ordered = []
+    for image_id in image_ids:
+        if image_id and image_id not in ordered:
+            ordered.append(image_id)
+    return ordered
+
+
+def resolve_product_images(product_data, new_cover_field=None, new_extra_image_fields=None, image_action='', image_id=''):
+    cover_id = product_data.get('cover') or ''
+    extra_images = unique_image_ids(product_data.get('extra_images', []))
+    extra_images = [value for value in extra_images if value != cover_id]
+
+    if image_action == 'delete' and image_id:
+        if image_id == cover_id:
+            cover_id = ''
+        extra_images = [value for value in extra_images if value != image_id]
+    elif image_action == 'set_cover' and image_id and image_id != cover_id and image_id in extra_images:
+        extra_images = [value for value in extra_images if value != image_id]
+        if cover_id:
+            extra_images.insert(0, cover_id)
+        cover_id = image_id
+
+    gallery_resp, uploaded_image_ids = upload_multiple_files(new_extra_image_fields or [])
+    if gallery_resp.get('code') != 0:
+        return gallery_resp, None
+
+    if new_cover_field is not None and has_uploaded_file(new_cover_field):
+        f = new_cover_field.data
+        upload_resp = upload_file(f)
+        if upload_resp.get('code') != 0:
+            return upload_resp, None
+        if cover_id:
+            extra_images.insert(0, cover_id)
+        cover_id = upload_resp['data']['id']
+
+    for uploaded_image_id in uploaded_image_ids:
+        if uploaded_image_id and uploaded_image_id != cover_id and uploaded_image_id not in extra_images:
+            extra_images.append(uploaded_image_id)
+
+    if not cover_id and extra_images:
+        cover_id = extra_images[0]
+        extra_images = extra_images[1:]
+
+    return {'code': 0, 'data': {}}, {
+        'cover': cover_id,
+        'extra_images': extra_images,
+    }
+
+
 def is_admin_user():
     if not current_user.is_authenticated:
         return False
@@ -170,6 +220,9 @@ def index():
     products_resp = TbMall(current_app).get_json('/products', params={'limit': 1, 'offset': 0}, check_code=False)
     orders_resp = TbBuy(current_app).get_json('/orders', params={'limit': 1, 'offset': 0}, check_code=False)
     transactions_resp = TbUser(current_app).get_json('/wallet_transactions', params={'limit': 1, 'offset': 0}, check_code=False)
+    recent_users_resp = TbUser(current_app).get_json('/users', params={'limit': 5, 'offset': 0}, check_code=False)
+    recent_shops_resp = TbMall(current_app).get_json('/shops', params={'limit': 5, 'offset': 0}, check_code=False)
+    recent_products_resp = TbMall(current_app).get_json('/products', params={'limit': 5, 'offset': 0}, check_code=False)
 
     stats = {
         'users': users_resp.get('data', {}).get('total', 0),
@@ -179,9 +232,9 @@ def index():
         'transactions': transactions_resp.get('data', {}).get('total', 0),
     }
 
-    recent_users = users_resp.get('data', {}).get('users', [])
-    recent_shops = shops_resp.get('data', {}).get('shops', [])
-    recent_products = products_resp.get('data', {}).get('products', [])
+    recent_users = recent_users_resp.get('data', {}).get('users', [])
+    recent_shops = recent_shops_resp.get('data', {}).get('shops', [])
+    recent_products = recent_products_resp.get('data', {}).get('products', [])
 
     return render_template(
         'admin/index.html',
@@ -420,6 +473,7 @@ def edit_product(id):
     })
 
     if form.validate_on_submit():
+        image_action = request.form.get('image_action', '').strip()
         payload = {
             'title': form.title.data,
             'description': form.description.data,
@@ -428,24 +482,17 @@ def edit_product(id):
             'price': form.price.data,
             'amount': form.amount.data,
         }
-        if has_uploaded_file(form.cover):
-            f = form.cover.data
-            upload_resp = upload_file(f)
-            if upload_resp.get('code') != 0:
-                flash(upload_resp.get('message', '商品图片上传失败'), 'danger')
-                return render_template('admin/product_edit.html', form=form, product=product, gallery=product_gallery(product))
-            payload['cover'] = upload_resp['data']['id']
-        gallery_resp, extra_image_ids = upload_multiple_files(form.extra_images.data)
-        if gallery_resp.get('code') != 0:
-            flash(gallery_resp.get('message', '商品图片上传失败'), 'danger')
+        image_resp, image_payload = resolve_product_images(
+            product,
+            form.cover,
+            form.extra_images.data,
+            image_action,
+            request.form.get('image_id', '').strip(),
+        )
+        if image_resp.get('code') != 0:
+            flash(image_resp.get('message', '商品图片上传失败'), 'danger')
             return render_template('admin/product_edit.html', form=form, product=product, gallery=product_gallery(product))
-        if extra_image_ids:
-            if 'cover' not in payload and not product.get('cover'):
-                payload['cover'] = extra_image_ids[0]
-                extra_image_ids = extra_image_ids[1:]
-            payload['extra_images'] = extra_image_ids
-        else:
-            payload['extra_images'] = product.get('extra_images', [])
+        payload.update(image_payload)
         resp = TbMall(current_app).post_json(f'/products/{id}', json=payload, check_code=False)
         if resp.get('code') != 0:
             flash(resp.get('message', '商品更新失败'), 'danger')
@@ -454,6 +501,28 @@ def edit_product(id):
             return redirect(url_for('.products'))
 
     return render_template('admin/product_edit.html', form=form, product=product, gallery=product_gallery(product))
+
+
+@admin.route('/products/<int:id>/images', methods=['POST'])
+@admin_required
+def update_product_images(id):
+    product = fetch_product_or_404(id)
+    image_resp, image_payload = resolve_product_images(
+        product,
+        image_action=request.form.get('image_action', '').strip(),
+        image_id=request.form.get('image_id', '').strip(),
+    )
+    if image_resp.get('code') != 0:
+        flash(image_resp.get('message', '商品图片更新失败'), 'danger')
+        return redirect(url_for('.edit_product', id=id))
+
+    resp = TbMall(current_app).post_json(f'/products/{id}', json=image_payload, check_code=False)
+    if resp.get('code') != 0:
+        flash(resp.get('message', '商品图片更新失败'), 'danger')
+    else:
+        flash('商品图片已更新', 'success')
+
+    return redirect(url_for('.edit_product', id=id))
 
 
 @admin.route('/products/<int:id>/delete', methods=['POST'])

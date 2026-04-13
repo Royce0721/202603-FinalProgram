@@ -31,6 +31,17 @@ def exists():
 def sales():
     limit = request.args.get('limit', 20, type=int)
     user_id = request.args.get('user_id', type=int)
+    product_ids = []
+    for value in request.args.get('product_ids', '').split(','):
+        value = value.strip()
+        if not value:
+            continue
+        try:
+            pid = int(value)
+        except ValueError:
+            continue
+        if pid > 0:
+            product_ids.append(pid)
 
     valid_statuses = ['paied', 'delivered', 'received', 'commented']
     query = (
@@ -41,17 +52,20 @@ def sales():
 
     if user_id is not None:
         query = query.filter(Order.user_id == user_id)
+    if product_ids:
+        query = query.filter(OrderProduct.product_id.in_(product_ids))
 
-    rows = (
+    query = (
         query.with_entities(
             OrderProduct.product_id.label('product_id'),
             func.sum(OrderProduct.amount).label('sales'),
         )
         .group_by(OrderProduct.product_id)
         .order_by(func.sum(OrderProduct.amount).desc(), OrderProduct.product_id.desc())
-        .limit(limit)
-        .all()
     )
+    if limit > 0:
+        query = query.limit(limit)
+    rows = query.all()
 
     return json_response(product_sales=[
         {

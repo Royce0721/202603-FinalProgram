@@ -127,6 +127,7 @@ def full_order_info(orders):
         order_item['address'] = addresses.get(str(order_item['address_id']))
         for order_product in order_item['order_products']:
             order_product['product'] = products.get(str(order_product['product_id']))
+            order_product['subtotal'] = to_money(order_product.get('price', 0)) * order_product.get('amount', 0)
 
     return orders
 

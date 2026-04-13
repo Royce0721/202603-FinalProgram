@@ -16,18 +16,44 @@ block title %}
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">当前图片</h5>
       {% if product['cover'] %}
-      <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: contain; background: #f8fafc;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+      <div class="image-manage-card mb-3">
+        <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: contain; background: #f8fafc;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+        <div class="image-manage-actions mt-3">
+          <form method="POST" action="{{ url_for('product.update_images', id=product['id']) }}">
+            {{ form.csrf_token }}
+            <input type="hidden" name="image_action" value="delete" />
+            <input type="hidden" name="image_id" value="{{ product['cover'] }}" />
+            <button class="btn btn-outline-danger btn-sm" type="submit">删除主图</button>
+          </form>
+        </div>
+      </div>
       {% else %}
       <div class="empty-state">
         <div class="empty-state__title">还没有商品图片</div>
         <p class="empty-state__text">补一张图，商品会更完整。</p>
       </div>
       {% endif %}
-      {% if gallery and gallery|length > 1 %}
+      {% if product.get('extra_images') %}
       <div class="row mt-3">
-        {% for image_id in gallery %}
+        {% for image_id in product.get('extra_images', []) %}
         <div class="col-6 mb-3">
-          <img class="img-fluid rounded border" style="width: 100%; height: 110px; object-fit: contain; background: #f8fafc;" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+          <div class="image-manage-card">
+            <img class="img-fluid rounded border" style="width: 100%; height: 110px; object-fit: contain; background: #f8fafc;" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+            <div class="image-manage-actions mt-2">
+              <form method="POST" action="{{ url_for('product.update_images', id=product['id']) }}">
+                {{ form.csrf_token }}
+                <input type="hidden" name="image_action" value="set_cover" />
+                <input type="hidden" name="image_id" value="{{ image_id }}" />
+                <button class="btn btn-outline-secondary btn-sm" type="submit">设为主图</button>
+              </form>
+              <form method="POST" action="{{ url_for('product.update_images', id=product['id']) }}">
+                {{ form.csrf_token }}
+                <input type="hidden" name="image_action" value="delete" />
+                <input type="hidden" name="image_id" value="{{ image_id }}" />
+                <button class="btn btn-outline-danger btn-sm" type="submit">删除</button>
+              </form>
+            </div>
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -38,8 +64,19 @@ block title %}
   <div class="col-lg-8 mb-4">
     <div class="border rounded p-4 bg-white">
       <h5 class="mb-3">编辑“{{ product['title'] }}”</h5>
-      <p class="text-muted">主图不换可以留空，详情图重新上传后会覆盖旧图集，图片尽量接近方图会更顺眼。</p>
-      {{ form_macro(form, enctype='multipart/form-data') }}
+      <p class="text-muted">主图可以单独更换，详情图会继续追加；右侧图片支持设为主图或直接删除。</p>
+      <form method="POST" enctype="multipart/form-data" id="product-edit-form">
+        {{ form.csrf_token }}
+        <div class="form-group">{{ form.title.label }} {{ form.title(class='form-control') }}</div>
+        <div class="form-group">{{ form.description.label }} {{ form.description(class='form-control') }}</div>
+        <div class="form-group">{{ form.category.label }} {{ form.category(class='form-control') }}</div>
+        <div class="form-group">{{ form.sku_text.label }} {{ form.sku_text(class='form-control') }}</div>
+        <div class="form-group">{{ form.price.label }} {{ form.price(class='form-control') }}</div>
+        <div class="form-group">{{ form.amount.label }} {{ form.amount(class='form-control') }}</div>
+        <div class="form-group">{{ form.cover.label }} {{ form.cover(class='form-control') }}</div>
+        <div class="form-group">{{ form.extra_images.label }} {{ form.extra_images(class='form-control') }}</div>
+        <div class="text-center my-5">{{ form.submit(class='btn btn-primary', id='product-edit-submit') }}</div>
+      </form>
     </div>
   </div>
 </div>

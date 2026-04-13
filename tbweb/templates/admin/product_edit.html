@@ -17,20 +17,57 @@
     </div>
     <div class="row">
       <div class="col-lg-7">
-        {{ form_macro(form, enctype='multipart/form-data') }}
+        <form method="POST" enctype="multipart/form-data" id="admin-product-edit-form">
+          {{ form.csrf_token }}
+          <div class="form-group">{{ form.title.label }} {{ form.title(class='form-control') }}</div>
+          <div class="form-group">{{ form.description.label }} {{ form.description(class='form-control') }}</div>
+          <div class="form-group">{{ form.category.label }} {{ form.category(class='form-control') }}</div>
+          <div class="form-group">{{ form.sku_text.label }} {{ form.sku_text(class='form-control') }}</div>
+          <div class="form-group">{{ form.price.label }} {{ form.price(class='form-control') }}</div>
+          <div class="form-group">{{ form.amount.label }} {{ form.amount(class='form-control') }}</div>
+          <div class="form-group">{{ form.cover.label }} {{ form.cover(class='form-control') }}</div>
+          <div class="form-group">{{ form.extra_images.label }} {{ form.extra_images(class='form-control') }}</div>
+          <div class="text-center my-5">{{ form.submit(class='btn btn-primary') }}</div>
+        </form>
       </div>
       <div class="col-lg-5">
         <div class="surface-card surface-card--soft">
           <div class="surface-card__body">
             <div class="font-weight-bold mb-3">当前商品</div>
             {% if product['cover'] %}
-            <img class="img-fluid rounded mb-3" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+            <div class="image-manage-card mb-3">
+              <img class="img-fluid rounded" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
+              <div class="image-manage-actions mt-3">
+                <form method="POST" action="{{ url_for('admin.update_product_images', id=product['id']) }}">
+                  {{ form.csrf_token }}
+                  <input type="hidden" name="image_action" value="delete" />
+                  <input type="hidden" name="image_id" value="{{ product['cover'] }}" />
+                  <button class="btn btn-outline-danger btn-sm" type="submit">删除主图</button>
+                </form>
+              </div>
+            </div>
             {% endif %}
-            {% if gallery and gallery|length > 1 %}
+            {% if product.get('extra_images') %}
             <div class="row mb-3">
-              {% for image_id in gallery %}
+              {% for image_id in product.get('extra_images', []) %}
               <div class="col-6 mb-2">
-                <img class="img-fluid rounded border" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+                <div class="image-manage-card">
+                  <img class="img-fluid rounded border" src="{{ file_url(image_id) }}" alt="{{ product['title'] }}" />
+                  <div class="image-manage-actions mt-2">
+                    <form method="POST" action="{{ url_for('admin.update_product_images', id=product['id']) }}">
+                      {{ form.csrf_token }}
+                      <input type="hidden" name="image_action" value="set_cover" />
+                      <input type="hidden" name="image_id" value="{{ image_id }}" />
+                      <button class="btn btn-outline-secondary btn-sm" type="submit">设为主图</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.update_product_images', id=product['id']) }}">
+                      {{ form.csrf_token }}
+                      <input type="hidden" name="image_action" value="delete" />
+                      <input type="hidden" name="image_id" value="{{ image_id }}" />
+                      <button class="btn btn-outline-danger btn-sm" type="submit">删除</button>
+                    </form>
+                  </div>
+                </div>
               </div>
               {% endfor %}
             </div>

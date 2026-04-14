@@ -22,6 +22,7 @@ class ProductForm(FlaskForm):
     description = TextAreaField('商品描述', validators=[DataRequired(), Length(2, 1000)])
     category = SelectField('商品分类', choices=PRODUCT_CATEGORY_CHOICES, validators=[DataRequired()])
     sku_text = TextAreaField('规格说明', validators=[Optional(), Length(0, 500)])
+    search_keywords = TextAreaField('搜索关键词', validators=[Optional(), Length(0, 500)])
     price = DecimalField('商品价格', places=2, validators=[DataRequired(), NumberRange(0.01, 100000000)])
     amount = IntegerField('库存数量', validators=[DataRequired(), NumberRange(0, 1000000)])
     cover = FileField('主图', validators=[FileAllowed(['jpg', 'jpeg', 'png'], '商品图片必须为图片')])

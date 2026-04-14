@@ -19,12 +19,16 @@ block title %}
       <div class="image-manage-card mb-3">
         <img class="img-fluid rounded" style="width: 100%; height: 220px; object-fit: contain; background: #f8fafc;" src="{{ file_url(product['cover']) }}" alt="{{ product['title'] }}" />
         <div class="image-manage-actions mt-3">
+          {% if product.get('extra_images') %}
           <form method="POST" action="{{ url_for('product.update_images', id=product['id']) }}">
             {{ form.csrf_token }}
             <input type="hidden" name="image_action" value="delete" />
             <input type="hidden" name="image_id" value="{{ product['cover'] }}" />
             <button class="btn btn-outline-danger btn-sm" type="submit">删除主图</button>
           </form>
+          {% else %}
+          <button class="btn btn-outline-secondary btn-sm" type="button" disabled>至少保留一张图片</button>
+          {% endif %}
         </div>
       </div>
       {% else %}
@@ -69,6 +73,7 @@ block title %}
         <div class="form-group">{{ form.description.label }} {{ form.description(class='form-control') }}</div>
         <div class="form-group">{{ form.category.label }} {{ form.category(class='form-control') }}</div>
         <div class="form-group">{{ form.sku_text.label }} {{ form.sku_text(class='form-control') }}</div>
+        <div class="form-group">{{ form.search_keywords.label }} {{ form.search_keywords(class='form-control', rows='3', placeholder='多个词用逗号隔开') }}</div>
         <div class="form-group">{{ form.price.label }} {{ form.price(class='form-control') }}</div>
         <div class="form-group">{{ form.amount.label }} {{ form.amount(class='form-control') }}</div>
         <div class="form-group">{{ form.cover.label }} {{ form.cover(class='form-control') }}</div>

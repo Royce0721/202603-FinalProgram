@@ -61,6 +61,8 @@ def resolve_product_images(product_data, new_cover_field=None, new_extra_image_f
     extra_images = [value for value in extra_images if value != cover_id]
 
     if image_action == 'delete' and image_id:
+        if image_id == cover_id and not extra_images:
+            return {'code': 1, 'message': '至少保留一张商品图片'}, None
         if image_id == cover_id:
             cover_id = ''
         extra_images = [value for value in extra_images if value != image_id]
@@ -106,35 +108,66 @@ def get_current_user_shop():
     return shops[0] if shops else None
 
 
+def sorted_products_by_sales(products):
+    enrich_products_with_sales(products)
+    products.sort(key=lambda item: (-int(item.get('sales') or 0), -int(item.get('id') or 0)))
+    return products
+
+
 @product.route('')
 def index():
     """商品列表
     """
     keywords = request.args.get('keywords', '')
     category = request.args.get('category', '').strip()
+    sort = request.args.get('sort', '').strip()
 
     page = request.args.get('page', 1, type=int)
 
     limit = PRODUCTS_PER_PAGE
     offset = (page - 1) * limit
-    resp = TbMall(current_app).get_json('/products', params={
-        'keywords': keywords,
-        'category': category,
-        'limit': limit,
-        'offset': offset
-    })
-    enrich_products_with_sales(resp.get('data', {}).get('products', []))
+    if sort == 'sales':
+        resp = TbMall(current_app).get_json('/products', params={
+            'keywords': keywords,
+            'category': category,
+            'limit': 1000,
+            'offset': 0,
+        })
+        all_products = resp.get('data', {}).get('products', [])
+        sorted_products_by_sales(all_products)
+        total = len(all_products)
+        products = all_products[offset: offset + limit]
+        data = {
+            'products': products,
+            'total': total,
+        }
+    else:
+        resp = TbMall(current_app).get_json('/products', params={
+            'keywords': keywords,
+            'category': category,
+            'limit': limit,
+            'offset': offset
+        })
+        products = resp.get('data', {}).get('products', [])
+        enrich_products_with_sales(products)
+        data = resp['data']
 
     category_options = [('', '全部分类')] + [
         choice for choice in PRODUCT_CATEGORY_CHOICES if choice[0] != ''
     ] + [('__uncategorized__', '未分类')]
+    sort_options = [
+        ('', '默认排序'),
+        ('sales', '销量优先'),
+    ]
 
     return render_template(
         'product/index.html',
-        **resp['data'],
+        **data,
         keywords=keywords,
         category=category,
         category_options=category_options,
+        sort=sort,
+        sort_options=sort_options,
         per_page=limit,
     )
 
@@ -233,6 +266,7 @@ def create():
             'description': form.description.data,
             'category': form.category.data,
             'sku_text': form.sku_text.data,
+            'search_keywords': form.search_keywords.data,
             'price': form.price.data,
             'amount': form.amount.data,
             'cover': cover,
@@ -268,6 +302,7 @@ def edit(id):
         'description': product_data.get('description'),
         'category': product_data.get('category'),
         'sku_text': product_data.get('sku_text'),
+        'search_keywords': product_data.get('search_keywords'),
         'price': to_money(product_data.get('price')),
         'amount': product_data.get('amount'),
     })
@@ -278,6 +313,7 @@ def edit(id):
             'description': form.description.data,
             'category': form.category.data,
             'sku_text': form.sku_text.data,
+            'search_keywords': form.search_keywords.data,
             'price': form.price.data,
             'amount': form.amount.data,
         }

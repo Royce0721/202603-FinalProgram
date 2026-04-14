@@ -45,6 +45,7 @@ class ProfileForm(FlaskForm):
 # 头像表单
 class AvatarForm(FlaskForm):
     avatar = FileField(
+        '头像',
         validators=[FileRequired(), FileAllowed(['jpg', 'png'], '头像必须为图片')])
     submit = SubmitField('提交')
 

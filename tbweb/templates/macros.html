@@ -60,6 +60,5 @@
 </form>
 {% endmacro %}
 
-{% macro file_url(filename) %} {{ filename if filename.startswith('http') else
-'{}/{}'.format(config['DOMAIN_TBFILE'], filename) }} {% endmacro %}
-
+{% macro file_url(filename) -%}{{ filename if filename.startswith('http') else
+'{}/{}'.format(config['DOMAIN_TBFILE'], filename) }}{%- endmacro %}

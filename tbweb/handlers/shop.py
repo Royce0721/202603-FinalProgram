@@ -21,6 +21,12 @@ def get_current_user_shop():
     return shops[0] if shops else None
 
 
+def sort_products_by_sales(products):
+    enrich_products_with_sales(products)
+    products.sort(key=lambda item: (-int(item.get('sales') or 0), -int(item.get('id') or 0)))
+    return products
+
+
 @shop.route('')
 def index():
     """店铺列表
@@ -58,7 +64,7 @@ def index():
             'limit': 3
         })
         shop['products'] = r['data']['products']
-        enrich_products_with_sales(shop['products'])
+        sort_products_by_sales(shop['products'])
 
     # 修改了下面这一行代码
     return render_template('shop/index.html', shops=shops, total=total, keywords=keywords, per_page=limit)
@@ -233,6 +239,6 @@ def full_shop_info(shops):
             'limit': 3
         })
         shop['products'] = r['data']['products']
-        enrich_products_with_sales(shop['products'])
+        sort_products_by_sales(shop['products'])
 
     return shops

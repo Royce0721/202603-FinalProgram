@@ -52,6 +52,7 @@ def create_product():
     extra.gallery = ','.join(normalize_gallery(data.get('extra_images')))
     extra.sku_text = (data.get('sku_text') or '').strip()
     extra.category = (data.get('category') or '').strip()
+    extra.search_keywords = (data.get('search_keywords') or '').strip()
     db.session.commit()
 
     return json_response(product=ProductSchema().dump(product))
@@ -79,10 +80,13 @@ def product_list():
 
     if keywords != '':
         like_keywords = '%{}%'.format(keywords)
-        query = query.filter(
+        query = query.outerjoin(Shop, Product.shop).outerjoin(ProductExtra, Product.extra).filter(
             or_(
                 Product.title.ilike(like_keywords),
-                Product.description.ilike(like_keywords)
+                Product.description.ilike(like_keywords),
+                Shop.name.ilike(like_keywords),
+                ProductExtra.category.ilike(like_keywords),
+                ProductExtra.search_keywords.ilike(like_keywords),
             )
         )
 
@@ -115,12 +119,14 @@ def update_product(id):
             continue
         setattr(product, k, v)
 
-    if 'extra_images' in data or 'sku_text' in data:
+    if 'extra_images' in data or 'sku_text' in data or 'search_keywords' in data:
         extra = ensure_product_extra(product)
         if 'extra_images' in data:
             extra.gallery = ','.join(normalize_gallery(data.get('extra_images')))
         if 'sku_text' in data:
             extra.sku_text = (data.get('sku_text') or '').strip()
+        if 'search_keywords' in data:
+            extra.search_keywords = (data.get('search_keywords') or '').strip()
     if 'category' in data:
         extra = ensure_product_extra(product)
         extra.category = (data.get('category') or '').strip()

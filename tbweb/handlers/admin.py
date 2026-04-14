@@ -58,6 +58,8 @@ def resolve_product_images(product_data, new_cover_field=None, new_extra_image_f
     extra_images = [value for value in extra_images if value != cover_id]
 
     if image_action == 'delete' and image_id:
+        if image_id == cover_id and not extra_images:
+            return {'code': 1, 'message': '至少保留一张商品图片'}, None
         if image_id == cover_id:
             cover_id = ''
         extra_images = [value for value in extra_images if value != image_id]
@@ -468,6 +470,7 @@ def edit_product(id):
         'description': product.get('description'),
         'category': product.get('category'),
         'sku_text': product.get('sku_text'),
+        'search_keywords': product.get('search_keywords'),
         'price': to_money(product.get('price')),
         'amount': product.get('amount'),
     })
@@ -479,6 +482,7 @@ def edit_product(id):
             'description': form.description.data,
             'category': form.category.data,
             'sku_text': form.sku_text.data,
+            'search_keywords': form.search_keywords.data,
             'price': form.price.data,
             'amount': form.amount.data,
         }

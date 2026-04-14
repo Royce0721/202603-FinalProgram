@@ -17,6 +17,7 @@ class ProductExtra(Base):
     gallery = db.Column(db.String(2000), nullable=False, default='')
     sku_text = db.Column(db.String(1000), nullable=False, default='')
     category = db.Column(db.String(100), nullable=False, default='')
+    search_keywords = db.Column(db.String(1000), nullable=False, default='')
 
 
 class ProductExtraSchema(Schema):
@@ -25,6 +26,7 @@ class ProductExtraSchema(Schema):
     gallery = fields.Str()
     sku_text = fields.Str()
     category = fields.Str()
+    search_keywords = fields.Str()
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 

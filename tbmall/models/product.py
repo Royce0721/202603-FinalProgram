@@ -49,6 +49,7 @@ class ProductSchema(Schema):
     extra_images = fields.Method('get_extra_images')
     sku_text = fields.Method('get_sku_text')
     category = fields.Method('get_category')
+    search_keywords = fields.Method('get_search_keywords')
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
@@ -66,6 +67,11 @@ class ProductSchema(Schema):
         if obj.extra is None:
             return ''
         return obj.extra.category or ''
+
+    def get_search_keywords(self, obj):
+        if obj.extra is None:
+            return ''
+        return obj.extra.search_keywords or ''
 
     @post_load
     def make_product(self, data, **kwargs):

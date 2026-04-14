@@ -3,47 +3,34 @@
 {% from 'shop/macros.html' import shop as shop_macro %}
 
 {% block body %}
-<section class="hero-panel">
-  <div class="hero-panel__eyebrow">精选推荐</div>
-  <h1 class="hero-panel__title">今天想买什么，就先看看。</h1>
-  <p class="hero-panel__text">
-    今天先逛点顺眼的，喜欢了就直接带走。
-  </p>
-  <div class="hero-actions">
-    <a class="btn btn-primary btn-lg" href="{{ url_for('product.index') }}">去逛商品</a>
-    <a class="btn btn-outline-primary btn-lg" href="{{ url_for('shop.index') }}">发现店铺</a>
-  </div>
-  <div class="hero-metrics">
-    <div class="hero-metric">
-      <div class="hero-metric__label">当前商品数</div>
-      <div class="hero-metric__value">{{ product_total }}</div>
-    </div>
-    <div class="hero-metric">
-      <div class="hero-metric__label">当前店铺数</div>
-      <div class="hero-metric__value">{{ shop_total }}</div>
-    </div>
-    <div class="hero-metric">
-      <div class="hero-metric__label">订单总数</div>
-      <div class="hero-metric__value">{{ order_total }}</div>
+<section class="hero-panel home-hero">
+  <div class="hero-copy">
+    <div class="hero-panel__eyebrow">精选推荐</div>
+    <h1 class="hero-panel__title home-hero__title">先看<strong class="home-hero__accent">商品</strong>，也别错过<strong class="home-hero__accent-alt">店铺</strong></h1>
+    <div class="home-hero__rail">
+      <a class="home-hero__link" href="{{ url_for('product.index') }}">商品广场</a>
+      <a class="home-hero__link" href="{{ url_for('shop.index') }}">店铺列表</a>
     </div>
   </div>
 </section>
 
-<section class="content-section">
+<section class="content-section home-section-card">
   <div class="content-section__header">
     <div>
       <h2 class="content-section__title">{{ recommendation_title }}</h2>
     </div>
     <a class="btn btn-outline-secondary" href="{{ url_for('product.index') }}">查看全部商品</a>
   </div>
-  <div class="product-grid">
+  <div class="row">
     {% for product in products %}
-    {{ product_macro(product) }}
+    <div class="col-sm-6 col-lg-4 col-xl-3 mb-4">
+      {{ product_macro(product, 'product-card--fluid') }}
+    </div>
     {% endfor %}
   </div>
 </section>
 
-<section class="content-section">
+<section class="content-section home-section-card">
   <div class="content-section__header">
     <div>
       <h2 class="content-section__title">热门店铺</h2>

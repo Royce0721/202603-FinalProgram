@@ -2,6 +2,7 @@ import traceback
 
 from flask import current_app, render_template
 from flask_login import LoginManager
+from werkzeug.exceptions import HTTPException
 
 from .address import address
 from .admin import admin
@@ -33,7 +34,10 @@ def init(app):
 
 def handle_error(error):
     traceback.print_exc()
-    return render_template('error.html', error=str(error))
+    status_code = 500
+    if isinstance(error, HTTPException):
+        status_code = error.code or 500
+    return render_template('error.html', error=str(error)), status_code
 
 
 def init_login_manager(app):

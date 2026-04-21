@@ -45,4 +45,141 @@
     {% endfor %}
   </div>
 </section>
+
+{% if config['ASSISTANT_ENABLED'] %}
+<div class="assistant-widget" data-page-name="首页">
+  <button class="assistant-widget__toggle" type="button" id="assistantToggle">
+    在线客服
+  </button>
+  <div class="assistant-panel d-none" id="assistantPanel">
+    <div class="assistant-panel__head">
+      <p class="assistant-panel__title">{{ config['ASSISTANT_TITLE'] }}</p>
+      <button class="assistant-panel__close" type="button" id="assistantClose">&times;</button>
+    </div>
+    <div class="assistant-panel__tips">
+      <div class="assistant-panel__chips">
+        <button class="assistant-chip" type="button" data-question="怎么下单">怎么下单</button>
+        <button class="assistant-chip" type="button" data-question="怎么开店">怎么开店</button>
+        <button class="assistant-chip" type="button" data-question="怎么查看订单">怎么查看订单</button>
+        <button class="assistant-chip" type="button" data-question="怎么发布商品">怎么发布商品</button>
+      </div>
+    </div>
+    <div class="assistant-messages" id="assistantMessages">
+      <div class="assistant-message">
+        <span class="assistant-message__label">客服</span>
+        <div class="assistant-message__bubble">你好，我可以帮你解答下单、开店、订单和账号这些问题。</div>
+      </div>
+    </div>
+    <form id="assistantForm">
+      <div class="assistant-form__row">
+        <input class="form-control" id="assistantInput" type="text" maxlength="200" placeholder="比如：怎么开店" />
+        <button class="btn btn-primary" type="submit">发送</button>
+      </div>
+      <div class="assistant-status" id="assistantStatus"></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{{ super() }}
+{% if config['ASSISTANT_ENABLED'] %}
+<script>
+  (function () {
+    var toggle = document.getElementById('assistantToggle');
+    var panel = document.getElementById('assistantPanel');
+    var closeBtn = document.getElementById('assistantClose');
+    var form = document.getElementById('assistantForm');
+    var input = document.getElementById('assistantInput');
+    var messages = document.getElementById('assistantMessages');
+    var status = document.getElementById('assistantStatus');
+    var pageName = (document.querySelector('.assistant-widget') || {}).dataset ? document.querySelector('.assistant-widget').dataset.pageName : '首页';
+
+    if (!toggle || !panel || !form || !input || !messages || !status) {
+      return;
+    }
+
+    function appendMessage(role, text) {
+      var item = document.createElement('div');
+      item.className = 'assistant-message assistant-message--' + role;
+
+      var label = document.createElement('span');
+      label.className = 'assistant-message__label';
+      label.textContent = role === 'user' ? '你' : '客服';
+
+      var bubble = document.createElement('div');
+      bubble.className = 'assistant-message__bubble';
+      bubble.textContent = text;
+
+      item.appendChild(label);
+      item.appendChild(bubble);
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function setStatus(text) {
+      status.textContent = text || '';
+    }
+
+    function sendQuestion(text) {
+      var question = (text || '').trim();
+      if (!question) {
+        return;
+      }
+
+      appendMessage('user', question);
+      input.value = '';
+      setStatus('正在回复...');
+
+      fetch('{{ url_for("assistant.chat") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: question,
+          page_name: pageName
+        })
+      })
+        .then(function (resp) { return resp.json(); })
+        .then(function (data) {
+          if (data.code !== 0) {
+            appendMessage('assistant', data.message || '我先没接上，你稍后再试试。');
+            setStatus('');
+            return;
+          }
+          appendMessage('assistant', (data.data || {}).answer || '我先没组织好这句，你可以换个问法试试。');
+          setStatus('');
+        })
+        .catch(function () {
+          appendMessage('assistant', '本地客服暂时没连上，你稍后再试试。');
+          setStatus('');
+        });
+    }
+
+    toggle.addEventListener('click', function () {
+      panel.classList.toggle('d-none');
+      if (!panel.classList.contains('d-none')) {
+        input.focus();
+      }
+    });
+
+    closeBtn.addEventListener('click', function () {
+      panel.classList.add('d-none');
+    });
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      sendQuestion(input.value);
+    });
+
+    document.querySelectorAll('.assistant-chip').forEach(function (button) {
+      button.addEventListener('click', function () {
+        sendQuestion(button.dataset.question || '');
+      });
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

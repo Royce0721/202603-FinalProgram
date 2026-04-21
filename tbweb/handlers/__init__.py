@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 
 from .address import address
 from .admin import admin
+from .assistant import assistant
 from .cart_product import cart_product
 from .common import common
 from .order import order
@@ -21,6 +22,7 @@ def init(app):
 
     app.register_blueprint(address)
     app.register_blueprint(admin)
+    app.register_blueprint(assistant)
     app.register_blueprint(cart_product)
     app.register_blueprint(common)
     app.register_blueprint(order)

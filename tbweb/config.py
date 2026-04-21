@@ -38,6 +38,12 @@ class BaseConfig(object):
 
     REDIS_URL = env('REDIS_URL', 'redis://localhost:6379/0')
 
+    ASSISTANT_ENABLED = env('ASSISTANT_ENABLED', '1') == '1'
+    ASSISTANT_TITLE = env('ASSISTANT_TITLE', '站内客服')
+    ASSISTANT_MODEL = env('ASSISTANT_MODEL', 'qwen2.5:3b')
+    ASSISTANT_BASE_URL = env('ASSISTANT_BASE_URL', 'http://127.0.0.1:11434')
+    ASSISTANT_TIMEOUT = int(env('ASSISTANT_TIMEOUT', '30'))
+
     ETCD_ADDR = env('ETCD_ADDR', 'localhost:2379')
     ETCD_PREFIX = env('ETCD_PREFIX', '/renaishop/services')
 

@@ -23,7 +23,7 @@
       <button type="submit" class="btn btn-primary">确认发货</button>
     </form>
     {% elif order['seller_delivered'] %}
-    <span class="badge-soft">你这边已发货</span>
+    <span class="badge-soft">已发货</span>
     {% endif %}
   </div>
 
@@ -56,7 +56,7 @@
   {% endfor %}
 
   {% if order['status'] == 'paied' and order['seller_delivered'] %}
-  <div class="alert alert-success mb-0">你店里的商品已经发出，等其他店铺也处理完，这张订单就会进入待收货。</div>
+  <div class="alert alert-success mb-0">你店铺的商品已发货</div>
   {% endif %}
   </div>
 </div>

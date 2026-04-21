@@ -91,6 +91,41 @@ def fetch_personalized_products(user_id, limit=4):
     return selected, categories
 
 
+def fill_products_with_hot_products(products, limit=4):
+    selected = list(products or [])
+    selected_ids = {int(product['id']) for product in selected if product.get('id') is not None}
+
+    if len(selected) >= limit:
+        return selected[:limit]
+
+    hot_products = fetch_products_by_ids(fetch_hot_product_ids(limit=50))
+    for product in hot_products:
+        product_id = int(product['id'])
+        if product_id in selected_ids:
+            continue
+        selected.append(product)
+        selected_ids.add(product_id)
+        if len(selected) >= limit:
+            break
+
+    if len(selected) < limit:
+        resp = TbMall(current_app).get_json('/products', params={
+            'limit': 20,
+            'offset': 0,
+        }, check_code=False)
+        latest_products = resp.get('data', {}).get('products', [])
+        for product in latest_products:
+            product_id = int(product['id'])
+            if product_id in selected_ids:
+                continue
+            selected.append(product)
+            selected_ids.add(product_id)
+            if len(selected) >= limit:
+                break
+
+    return selected[:limit]
+
+
 def fetch_hot_shops(limit=4):
     sales_rows = fetch_product_sales_rows(limit=100)
     product_ids = [row['product_id'] for row in sales_rows if row.get('product_id')]
@@ -151,7 +186,7 @@ def index():
     if current_user.is_authenticated:
         personalized_products, _categories = fetch_personalized_products(int(current_user.get_id()), limit=4)
         if personalized_products:
-            products = personalized_products
+            products = fill_products_with_hot_products(personalized_products, limit=4)
     enrich_products_with_sales(products)
 
     shops = fetch_hot_shops(limit=4)

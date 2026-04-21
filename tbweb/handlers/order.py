@@ -681,7 +681,7 @@ def seller_deliver(id):
             redis.srem(delivered_shops_key(id), shop_id)
         return seller_deliver_response(update_resp)
 
-    flash('你店铺这部分已经发货，等其他店铺也发完后，订单会进入待收货', 'success')
+    flash('你店铺的商品已发货', 'success')
     return seller_deliver_response({
         'code': 0,
         'message': '当前店铺商品已发货',
